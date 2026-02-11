@@ -7,23 +7,17 @@ import {
   HStack,
   SimpleGrid,
   Text,
-  useColorModeValue,
   Spinner,
-  Alert,
-  AlertIcon,
-  Select,
   IconButton,
-  Badge,
   Flex,
-  ButtonGroup,
-  Tabs,
-  TabList,
-  TabPanels,
-  Tab,
-  TabPanel,
+  TabsRoot,
+  TabsList,
+  TabsTrigger,
+  TabsContent,
+  chakra
 } from '@chakra-ui/react';
 import { useNavigate } from 'react-router';
-import { AddIcon, ChevronLeftIcon, ChevronRightIcon } from '@chakra-ui/icons';
+import { MdChevronLeft, MdChevronRight } from 'react-icons/md';
 import { postsAPI, networkAPI } from '../services/api';
 import { OwnedNetwork, PostDetailedListItem, PostDetailedListResponse } from '@/types';
 import PostCard from '../components/PostCard';
@@ -50,7 +44,6 @@ const PostsPage: React.FC = () => {
   const [networkTotalPages, setNetworkTotalPages] = useState(1);
   const [networkTotalPosts, setNetworkTotalPosts] = useState(0);
   const [networkPostsPerPage, setNetworkPostsPerPage] = useState(12);
-  const [networksLoading, setNetworksLoading] = useState(true);
 
   // Stavy pro editované příspěvky - nyní používáme detailní data
   const [editorPosts, setEditorPosts] = useState<PostDetailedListItem[]>([]);
@@ -63,8 +56,6 @@ const PostsPage: React.FC = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
 
-  const bgColor = useColorModeValue('gray.50', 'gray.900');
-  const cardBg = useColorModeValue('white', 'gray.800');
 
   useEffect(() => {
     loadPosts();
@@ -121,8 +112,6 @@ const PostsPage: React.FC = () => {
 
   const loadNetworks = async () => {
     try {
-      setNetworksLoading(true);
-
       // Načteme vlastní sítě a sítě s oprávněními
       const [ownedResponse, allResponse] = await Promise.all([
         networkAPI.getOwnedNetworks(),
@@ -149,8 +138,6 @@ const PostsPage: React.FC = () => {
     } catch (error) {
       console.error('Chyba při načítání sociálních sítí:', error);
       setNetworkError('Nepodařilo se načíst sociální sítě');
-    } finally {
-      setNetworksLoading(false);
     }
   };
 
@@ -289,6 +276,173 @@ const PostsPage: React.FC = () => {
     return network?.networkName || 'Neznámá síť';
   };
 
+  const renderNetworkPosts = () => {
+    return (
+      <>
+        {/* Network selector */}
+        {networks.length > 0 && (
+          <Box mb={6}>
+            <HStack gap={2} align="center">
+              <Text fontSize="sm" fontWeight="medium">
+                Vyberte síť:
+              </Text>
+              <chakra.select
+                value={selectedNetworkId || ''}
+                onChange={handleNetworkChange}
+                width="auto"
+                px={3}
+                py={1}
+                borderRadius="md"
+                borderWidth="1px"
+                bg={{ base: "white", _dark: "gray.700" }}
+                borderColor={{ base: "gray.300", _dark: "gray.600" }}
+                color={{ base: "black", _dark: "white" }}
+              >
+                {networks.map((network) => (
+                  <option key={network.networkId} value={network.networkId}>
+                    {network.networkName}
+                  </option>
+                ))}
+              </chakra.select>
+            </HStack>
+          </Box>
+        )}
+
+        {/* Error Message */}
+        {networkError && (
+          <Box
+            p={3}
+            bg={{ base: "red.50", _dark: "red.900" }}
+            borderRadius="md"
+            borderWidth="1px"
+            borderColor={{ base: "red.200", _dark: "red.700" }}
+            mb={6}
+          >
+            <VStack align="start" gap={2}>
+              <Text fontWeight="bold" color={{ base: "red.800", _dark: "red.200" }}>
+                Chyba při načítání síťových příspěvků!
+              </Text>
+              <Text fontSize="sm" color={{ base: "red.700", _dark: "red.300" }}>
+                {networkError}
+              </Text>
+            </VStack>
+          </Box>
+        )}
+
+        {/* Loading State */}
+        {networkLoading ? (
+          <Box display="flex" justifyContent="center" py={12}>
+            <VStack gap={4}>
+              <Spinner size="lg" color="blue.500" />
+              <Text fontSize={{ base: "sm", md: "md" }}>
+                Načítání příspěvků ze sítě {getSelectedNetworkName()}...
+              </Text>
+            </VStack>
+          </Box>
+        ) : networkPosts.length === 0 && !networkError ? (
+          <Box
+            textAlign="center"
+            py={{ base: 8, md: 12 }}
+            borderWidth="1px"
+            borderRadius="lg"
+            borderStyle="dashed"
+            borderColor={{ base: "gray.300", _dark: "gray.600" }}
+            w="100%"
+          >
+            <VStack gap={4} px={{ base: 4, md: 0 }}>
+              <Text fontSize={{ base: "md", md: "lg" }} fontWeight="medium" wordBreak="break-word">
+                {selectedNetworkId ? `Žádné příspěvky na síti ${getSelectedNetworkName()}` : 'Vyberte síť pro zobrazení příspěvků'}
+              </Text>
+            </VStack>
+          </Box>
+        ) : (
+          <>
+            <SimpleGrid columns={{ base: 1, lg: 2, xl: 3 }} gap={{ base: 3, md: 4 }}>
+              {networkPosts.map((post) => (
+                <PostCard
+                  key={post.postId}
+                  post={post}
+                  onPostDeleted={handlePostDeleted}
+                  showDeleteModal={false}
+                  currentUserId={user?.id}
+                  networksMap={createNetworksMap()}
+                />
+              ))}
+            </SimpleGrid>
+
+            {renderNetworkPagination()}
+          </>
+        )}
+      </>
+    );
+  };
+
+  const renderEditorPosts = () => {
+    return (
+      <>
+        {/* Error Message */}
+        {editorError && (
+          <Box
+            p={3}
+            bg={{ base: "red.50", _dark: "red.900" }}
+            borderRadius="md"
+            borderWidth="1px"
+            borderColor={{ base: "red.200", _dark: "red.700" }}
+            mb={6}
+          >
+            <VStack align="start" gap={2}>
+              <Text fontWeight="bold" color={{ base: "red.800", _dark: "red.200" }}>
+                Chyba při načítání editovaných příspěvků!
+              </Text>
+              <Text fontSize="sm" color={{ base: "red.700", _dark: "red.300" }}>
+                {editorError}
+              </Text>
+            </VStack>
+          </Box>
+        )}
+
+        {/* Empty State */}
+        {editorPosts.length === 0 && !editorError ? (
+          <Box
+            textAlign="center"
+            py={{ base: 8, md: 12 }}
+            borderWidth="1px"
+            borderRadius="lg"
+            borderStyle="dashed"
+            borderColor={{ base: "gray.300", _dark: "gray.600" }}
+            w="100%"
+          >
+            <VStack gap={4} px={{ base: 4, md: 0 }}>
+              <Text fontSize={{ base: "md", md: "lg" }} fontWeight="medium" wordBreak="break-word">
+                Žádné editované příspěvky
+              </Text>
+              <Text color={{ base: "gray.600", _dark: "gray.400" }} fontSize={{ base: "sm", md: "md" }} wordBreak="break-word">
+                Zde se zobrazí příspěvky, které můžete editovat jako editor
+              </Text>
+            </VStack>
+          </Box>
+        ) : (
+          <>
+            <SimpleGrid columns={{ base: 1, lg: 2, xl: 3 }} gap={{ base: 3, md: 4 }}>
+              {editorPosts.map((post) => (
+                <PostCard
+                  key={post.postId}
+                  post={post}
+                  onPostDeleted={handlePostDeleted}
+                  showDeleteModal={false}
+                  currentUserId={user?.id}
+                  networksMap={createNetworksMap()}
+                />
+              ))}
+            </SimpleGrid>
+
+            {renderEditorPagination()}
+          </>
+        )}
+      </>
+    );
+  };
+
   const renderPagination = () => {
     const pageNumbers = [];
     const maxVisiblePages = 5;
@@ -308,16 +462,17 @@ const PostsPage: React.FC = () => {
       <Flex justify="center" align="center" mt={8} wrap="wrap" gap={4}>
         {/* Zobrazit navigaci jen pokud máme více než 1 stránku */}
         {totalPages > 1 && (
-          <HStack spacing={2}>
+          <HStack gap={2}>
             <IconButton
               aria-label="Předchozí stránka"
-              icon={<ChevronLeftIcon />}
               onClick={() => handlePageChange(currentPage - 1)}
-              isDisabled={currentPage === 1}
+              disabled={currentPage === 1}
               size="sm"
-            />
+            >
+              <MdChevronLeft />
+            </IconButton>
 
-            <ButtonGroup isAttached size="sm">
+            <HStack gap={2}>
               {startPage > 1 && (
                 <>
                   <Button onClick={() => handlePageChange(1)} variant="outline">
@@ -331,7 +486,7 @@ const PostsPage: React.FC = () => {
                 <Button
                   key={pageNum}
                   onClick={() => handlePageChange(pageNum)}
-                  colorScheme={currentPage === pageNum ? 'blue' : 'gray'}
+                  colorPalette={currentPage === pageNum ? 'blue' : 'gray'}
                   variant={currentPage === pageNum ? 'solid' : 'outline'}
                 >
                   {pageNum}
@@ -346,41 +501,42 @@ const PostsPage: React.FC = () => {
                   </Button>
                 </>
               )}
-            </ButtonGroup>
+            </HStack>
 
             <IconButton
               aria-label="Další stránka"
-              icon={<ChevronRightIcon />}
               onClick={() => handlePageChange(currentPage + 1)}
-              isDisabled={currentPage === totalPages}
+              disabled={currentPage === totalPages}
               size="sm"
-            />
+            >
+              <MdChevronRight />
+            </IconButton>
           </HStack>
         )}
 
         {/* Selector pro počet příspěvků - zobrazit vždy pokud máme příspěvky */}
         {totalPosts > 0 && (
-          <HStack spacing={2} align="center">
-            <Text fontSize="sm" color={useColorModeValue('gray.600', 'gray.400')}>
+          <HStack gap={2} align="center">
+            <Text fontSize="sm" color={{ base: "gray.600", _dark: "gray.400" }}>
               Příspěvků na stránku:
             </Text>
-            <Select
+            <chakra.select
               value={postsPerPage}
               onChange={handlePerPageChange}
-              size="sm"
               width="auto"
-              bg={useColorModeValue('white', 'gray.700')}
-              color={useColorModeValue('black', 'white')}
-              _focus={{
-                borderColor: useColorModeValue('blue.500', 'blue.300'),
-                boxShadow: useColorModeValue('0 0 0 1px blue.500', '0 0 0 1px blue.300'),
-              }}
+              px={3}
+              py={1}
+              borderRadius="md"
+              borderWidth="1px"
+              bg={{ base: "white", _dark: "gray.700" }}
+              borderColor={{ base: "gray.300", _dark: "gray.600" }}
+              color={{ base: "black", _dark: "white" }}
             >
-              <option value={6} style={{ backgroundColor: useColorModeValue('#ffffff', '#2D3748'), color: useColorModeValue('#000000', '#ffffff') }}>6</option>
-              <option value={12} style={{ backgroundColor: useColorModeValue('#ffffff', '#2D3748'), color: useColorModeValue('#000000', '#ffffff') }}>12</option>
-              <option value={24} style={{ backgroundColor: useColorModeValue('#ffffff', '#2D3748'), color: useColorModeValue('#000000', '#ffffff') }}>24</option>
-              <option value={50} style={{ backgroundColor: useColorModeValue('#ffffff', '#2D3748'), color: useColorModeValue('#000000', '#ffffff') }}>50</option>
-            </Select>
+              <option value={6}>6</option>
+              <option value={12}>12</option>
+              <option value={24}>24</option>
+              <option value={50}>50</option>
+            </chakra.select>
           </HStack>
         )}
       </Flex>
@@ -404,16 +560,17 @@ const PostsPage: React.FC = () => {
     return (
       <Flex justify="center" align="center" mt={8} wrap="wrap" gap={4}>
         {networkTotalPages > 1 && (
-          <HStack spacing={2}>
+          <HStack gap={2}>
             <IconButton
               aria-label="Předchozí stránka"
-              icon={<ChevronLeftIcon />}
               onClick={() => handleNetworkPageChange(networkCurrentPage - 1)}
-              isDisabled={networkCurrentPage === 1}
+              disabled={networkCurrentPage === 1}
               size="sm"
-            />
+            >
+              <MdChevronLeft />
+            </IconButton>
 
-            <ButtonGroup isAttached size="sm">
+            <HStack gap={2}>
               {startPage > 1 && (
                 <>
                   <Button onClick={() => handleNetworkPageChange(1)} variant="outline">
@@ -427,7 +584,7 @@ const PostsPage: React.FC = () => {
                 <Button
                   key={pageNum}
                   onClick={() => handleNetworkPageChange(pageNum)}
-                  colorScheme={networkCurrentPage === pageNum ? 'blue' : 'gray'}
+                  colorPalette={networkCurrentPage === pageNum ? 'blue' : 'gray'}
                   variant={networkCurrentPage === pageNum ? 'solid' : 'outline'}
                 >
                   {pageNum}
@@ -442,40 +599,41 @@ const PostsPage: React.FC = () => {
                   </Button>
                 </>
               )}
-            </ButtonGroup>
+            </HStack>
 
             <IconButton
               aria-label="Další stránka"
-              icon={<ChevronRightIcon />}
               onClick={() => handleNetworkPageChange(networkCurrentPage + 1)}
-              isDisabled={networkCurrentPage === networkTotalPages}
+              disabled={networkCurrentPage === networkTotalPages}
               size="sm"
-            />
+            >
+              <MdChevronRight />
+            </IconButton>
           </HStack>
         )}
 
         {networkTotalPosts > 0 && (
-          <HStack spacing={2} align="center">
-            <Text fontSize="sm" color={useColorModeValue('gray.600', 'gray.400')}>
+          <HStack gap={2} align="center">
+            <Text fontSize="sm" color={{ base: "gray.600", _dark: "gray.400" }}>
               Příspěvků na stránku:
             </Text>
-            <Select
+            <chakra.select
               value={networkPostsPerPage}
               onChange={handleNetworkPerPageChange}
-              size="sm"
               width="auto"
-              bg={useColorModeValue('white', 'gray.700')}
-              color={useColorModeValue('black', 'white')}
-              _focus={{
-                borderColor: useColorModeValue('blue.500', 'blue.300'),
-                boxShadow: useColorModeValue('0 0 0 1px blue.500', '0 0 0 1px blue.300'),
-              }}
+              px={3}
+              py={1}
+              borderRadius="md"
+              borderWidth="1px"
+              bg={{ base: "white", _dark: "gray.700" }}
+              borderColor={{ base: "gray.300", _dark: "gray.600" }}
+              color={{ base: "black", _dark: "white" }}
             >
-              <option value={6} style={{ backgroundColor: useColorModeValue('#ffffff', '#2D3748'), color: useColorModeValue('#000000', '#ffffff') }}>6</option>
-              <option value={12} style={{ backgroundColor: useColorModeValue('#ffffff', '#2D3748'), color: useColorModeValue('#000000', '#ffffff') }}>12</option>
-              <option value={24} style={{ backgroundColor: useColorModeValue('#ffffff', '#2D3748'), color: useColorModeValue('#000000', '#ffffff') }}>24</option>
-              <option value={50} style={{ backgroundColor: useColorModeValue('#ffffff', '#2D3748'), color: useColorModeValue('#000000', '#ffffff') }}>50</option>
-            </Select>
+              <option value={6}>6</option>
+              <option value={12}>12</option>
+              <option value={24}>24</option>
+              <option value={50}>50</option>
+            </chakra.select>
           </HStack>
         )}
       </Flex>
@@ -499,16 +657,17 @@ const PostsPage: React.FC = () => {
     return (
       <Flex justify="center" align="center" mt={8} wrap="wrap" gap={4}>
         {editorTotalPages > 1 && (
-          <HStack spacing={2}>
+          <HStack gap={2}>
             <IconButton
               aria-label="Předchozí stránka"
-              icon={<ChevronLeftIcon />}
               onClick={() => handleEditorPageChange(editorCurrentPage - 1)}
-              isDisabled={editorCurrentPage === 1}
+              disabled={editorCurrentPage === 1}
               size="sm"
-            />
+            >
+              <MdChevronLeft />
+            </IconButton>
 
-            <ButtonGroup isAttached size="sm">
+            <HStack gap={2}>
               {startPage > 1 && (
                 <>
                   <Button onClick={() => handleEditorPageChange(1)} variant="outline">
@@ -522,7 +681,7 @@ const PostsPage: React.FC = () => {
                 <Button
                   key={pageNum}
                   onClick={() => handleEditorPageChange(pageNum)}
-                  colorScheme={editorCurrentPage === pageNum ? 'blue' : 'gray'}
+                  colorPalette={editorCurrentPage === pageNum ? 'blue' : 'gray'}
                   variant={editorCurrentPage === pageNum ? 'solid' : 'outline'}
                 >
                   {pageNum}
@@ -537,82 +696,47 @@ const PostsPage: React.FC = () => {
                   </Button>
                 </>
               )}
-            </ButtonGroup>
+            </HStack>
 
             <IconButton
               aria-label="Další stránka"
-              icon={<ChevronRightIcon />}
               onClick={() => handleEditorPageChange(editorCurrentPage + 1)}
-              isDisabled={editorCurrentPage === editorTotalPages}
+              disabled={editorCurrentPage === editorTotalPages}
               size="sm"
-            />
+            >
+              <MdChevronRight />
+            </IconButton>
           </HStack>
         )}
 
         {editorTotalPosts > 0 && (
-          <HStack spacing={2} align="center">
-            <Text fontSize="sm" color={useColorModeValue('gray.600', 'gray.400')}>
+          <HStack gap={2} align="center">
+            <Text fontSize="sm" color={{ base: "gray.600", _dark: "gray.400" }}>
               Příspěvků na stránku:
             </Text>
-            <Select
+            <chakra.select
               value={editorPostsPerPage}
               onChange={handleEditorPerPageChange}
-              size="sm"
               width="auto"
-              bg={useColorModeValue('white', 'gray.700')}
-              color={useColorModeValue('black', 'white')}
-              _focus={{
-                borderColor: useColorModeValue('blue.500', 'blue.300'),
-                boxShadow: useColorModeValue('0 0 0 1px blue.500', '0 0 0 1px blue.300'),
-              }}
+              px={3}
+              py={1}
+              borderRadius="md"
+              borderWidth="1px"
+              bg={{ base: "white", _dark: "gray.700" }}
+              borderColor={{ base: "gray.300", _dark: "gray.600" }}
+              color={{ base: "black", _dark: "white" }}
             >
-              <option value={6} style={{ backgroundColor: useColorModeValue('#ffffff', '#2D3748'), color: useColorModeValue('#000000', '#ffffff') }}>6</option>
-              <option value={12} style={{ backgroundColor: useColorModeValue('#ffffff', '#2D3748'), color: useColorModeValue('#000000', '#ffffff') }}>12</option>
-              <option value={24} style={{ backgroundColor: useColorModeValue('#ffffff', '#2D3748'), color: useColorModeValue('#000000', '#ffffff') }}>24</option>
-              <option value={50} style={{ backgroundColor: useColorModeValue('#ffffff', '#2D3748'), color: useColorModeValue('#000000', '#ffffff') }}>50</option>
-            </Select>
+              <option value={6}>6</option>
+              <option value={12}>12</option>
+              <option value={24}>24</option>
+              <option value={50}>50</option>
+            </chakra.select>
           </HStack>
         )}
       </Flex>
     );
   };
 
-  // Funkce pro získání oprávnění pro síťové příspěvky
-  const getNetworkPostPermissions = (post: PostDetailedListItem) => {
-    if (!user) {
-      return { canEdit: false, canDelete: false };
-    }
-
-    // Pokud je uživatel tvůrce příspěvku, má plná oprávnění
-    if (post.creator.id === user.id) {
-      return { canEdit: true, canDelete: true };
-    }
-
-    // Pro přesná oprávnění bychom měli zavolat GET /post/{postId} endpoint
-    // a zkontrolovat, zda je uživatel v seznamu editors
-    // Prozatím vrátíme pouze základní oprávnění
-
-    // Pokud má uživatel přístup k síti, může alespoň zobrazit detail
-    const selectedNetwork = networks.find(n => n.networkId === selectedNetworkId);
-    if (selectedNetwork) {
-      // Je to vlastní síť?
-      const isOwnedNetwork = !('permission' in selectedNetwork);
-
-      if (isOwnedNetwork) {
-        // Na vlastní síti může majitel editovat příspěvky (pokud je editor)
-        // ale mazat pouze vlastní příspěvky
-        return { canEdit: false, canDelete: false }; // Bez detailních info z API nemůžeme určit
-      }
-
-      if ('permission' in selectedNetwork && selectedNetwork.permission === 'write') {
-        // S write oprávněním může editovat (pokud je editor), ale mazat pouze vlastní
-        return { canEdit: false, canDelete: false }; // Bez detailních info z API nemůžeme určit
-      }
-    }
-
-    // Pro všechny ostatní případy nemá oprávnění k editaci/mazání
-    return { canEdit: false, canDelete: false };
-  };
 
   // Vytvořit mapování networkId na názvy sítí
   const createNetworksMap = (): Map<number, string> => {
@@ -626,7 +750,7 @@ const PostsPage: React.FC = () => {
   if (loading) {
     return (
       <Box display="flex" justifyContent="center" alignItems="center" minH="400px">
-        <VStack spacing={4}>
+        <VStack gap={4}>
           <Spinner size="xl" color="blue.500" />
           <Text>Načítání příspěvků...</Text>
         </VStack>
@@ -637,7 +761,7 @@ const PostsPage: React.FC = () => {
   return (
     <Box
       minH="100vh"
-      bg={bgColor}
+      bg={{ base: "gray.50", _dark: "gray.900" }}
       w="100%"
       maxW="100vw"
       overflow="hidden"
@@ -647,12 +771,12 @@ const PostsPage: React.FC = () => {
         mx="auto"
         w="100%"
       >
-        <VStack spacing={6} align="stretch" w="100%" px={{ base: 0, md: 0 }}>
+        <VStack gap={6} align="stretch" w="100%" px={{ base: 0, md: 0 }}>
           {/* Header */}
-          <Box bg={cardBg} p={{ base: 4, md: 6 }} borderRadius="lg" shadow="sm" w="100%" overflow="hidden">
-            <VStack spacing={4} align="stretch" w="100%">
+          <Box bg={{ base: "white", _dark: "gray.800" }} p={{ base: 4, md: 6 }} borderRadius="lg" shadow="sm" w="100%" overflow="hidden">
+            <VStack gap={4} align="stretch" w="100%">
               <VStack
-                spacing={3}
+                gap={3}
                 align="stretch"
                 w="100%"
                 display={{ base: "flex", md: "none" }}
@@ -661,10 +785,9 @@ const PostsPage: React.FC = () => {
                   Správa příspěvků
                 </Heading>
                 <Button
-                  leftIcon={creatingPost ? <Spinner size="sm" /> : <AddIcon />}
-                  colorScheme="blue"
+                  colorPalette="blue"
                   onClick={handleCreateNew}
-                  isLoading={creatingPost}
+                  loading={creatingPost}
                   loadingText="Vytváří se..."
                   size="md"
                   w="100%"
@@ -685,10 +808,9 @@ const PostsPage: React.FC = () => {
                   Správa příspěvků
                 </Heading>
                 <Button
-                  leftIcon={creatingPost ? <Spinner size="sm" /> : <AddIcon />}
-                  colorScheme="blue"
+                  colorPalette="blue"
                   onClick={handleCreateNew}
-                  isLoading={creatingPost}
+                  loading={creatingPost}
                   loadingText="Vytváří se..."
                   size="lg"
                 >
@@ -699,463 +821,128 @@ const PostsPage: React.FC = () => {
           </Box>
 
           {/* Tabs */}
-          <Box bg={cardBg} borderRadius="lg" shadow="sm" w="100%" overflow="hidden">
-            <Tabs isFitted variant="enclosed" w="100%">
-              <TabList
+          <Box bg={{ base: "white", _dark: "gray.800" }} borderRadius="lg" shadow="sm" w="100%" overflow="hidden">
+            <TabsRoot defaultValue="my-posts">
+              <TabsList
                 overflowX="auto"
                 overflowY="hidden"
                 css={{
                   '&::-webkit-scrollbar': {
-                    height: '4px',
+                    height: '4px'
                   },
                   '&::-webkit-scrollbar-track': {
-                    background: useColorModeValue('#f1f1f1', '#2d3748'),
+                    background: { base: "#f1f1f1", _dark: "#2d3748" }
                   },
                   '&::-webkit-scrollbar-thumb': {
-                    background: useColorModeValue('#c1c1c1', '#4a5568'),
-                    borderRadius: '2px',
-                  },
+                    background: { base: "#c1c1c1", _dark: "#4a5568" },
+                    borderRadius: '2px'
+                  }
                 }}
               >
-                <Tab fontSize={{ base: "sm", md: "md" }} minW="fit-content" px={{ base: 2, md: 4 }}>
+                <TabsTrigger value="my-posts" fontSize={{ base: "sm", md: "md" }} minW="fit-content" px={{ base: 2, md: 4 }}>
                   Moje příspěvky
-                </Tab>
-                <Tab fontSize={{ base: "sm", md: "md" }} minW="fit-content" px={{ base: 2, md: 4 }}>
+                </TabsTrigger>
+                <TabsTrigger value="network-posts" fontSize={{ base: "sm", md: "md" }} minW="fit-content" px={{ base: 2, md: 4 }}>
                   Síťové příspěvky
-                </Tab>
-                <Tab fontSize={{ base: "sm", md: "md" }} minW="fit-content" px={{ base: 2, md: 4 }}>
+                </TabsTrigger>
+                <TabsTrigger value="editor-posts" fontSize={{ base: "sm", md: "md" }} minW="fit-content" px={{ base: 2, md: 4 }}>
                   Editované příspěvky
-                </Tab>
-              </TabList>
-              <TabPanels w="100%">
-                {/* Tab 1: Moje příspěvky */}
-                <TabPanel p={{ base: 4, md: 6 }} w="100%">
-                  {/* Error Message */}
-                  {error && (
-                    <Alert status="error" borderRadius="md" mb={6}>
-                      <AlertIcon />
-                      <Box w="100%">
-                        <Text fontWeight="bold" wordBreak="break-word" fontSize={{ base: "sm", md: "md" }}>
-                          Chyba při načítání příspěvků!
-                        </Text>
-                        <Text wordBreak="break-word" fontSize={{ base: "sm", md: "md" }}>
-                          {error}
-                        </Text>
-                      </Box>
-                    </Alert>
-                  )}
+                </TabsTrigger>
+              </TabsList>
 
-                  {/* Loading State */}
-                  {loading ? (
-                    <Box display="flex" justifyContent="center" py={12}>
-                      <VStack spacing={4}>
-                        <Spinner size="lg" color="blue.500" />
-                        <Text fontSize={{ base: "sm", md: "md" }}>
-                          Načítání příspěvků...
-                        </Text>
-                      </VStack>
-                    </Box>
-                  ) : posts.length === 0 && !error ? (
-                    <Box
-                      textAlign="center"
-                      py={{ base: 8, md: 12 }}
-                      borderWidth="1px"
-                      borderRadius="lg"
-                      borderStyle="dashed"
-                      borderColor={useColorModeValue('gray.300', 'gray.600')}
-                      w="100%"
-                    >
-                      <VStack spacing={4} px={{ base: 4, md: 0 }}>
-                        <Text
-                          fontSize={{ base: "md", md: "lg" }}
-                          fontWeight="medium"
-                          wordBreak="break-word"
-                        >
-                          Zatím nemáte žádné příspěvky
-                        </Text>
-                        <Text
-                          color={useColorModeValue('gray.600', 'gray.400')}
-                          fontSize={{ base: "sm", md: "md" }}
-                          wordBreak="break-word"
-                        >
-                          Vytvořte svůj první příspěvek pro sociální sítě
-                        </Text>
-                        <Button
-                          leftIcon={creatingPost ? <Spinner size="sm" /> : <AddIcon />}
-                          colorScheme="blue"
-                          onClick={handleCreateNew}
-                          isLoading={creatingPost}
-                          loadingText="Vytváří se..."
-                          size={{ base: "md", md: "lg" }}
-                          w={{ base: "100%", md: "auto" }}
-                          maxW={{ base: "300px", md: "none" }}
-                        >
-                          Vytvořit první příspěvek
-                        </Button>
-                      </VStack>
-                    </Box>
-                  ) : (
-                    <>
-                      <Box w="100%" overflow="hidden" py={2}>
-                        <SimpleGrid
-                          columns={{ base: 1, lg: 2, xl: 3 }}
-                          spacing={{ base: 3, md: 4 }}
-                          w="100%"
-                        >
-                          {posts.map((post) => (
-                            <Box key={post.postId} w="100%" overflow="hidden">
-                              <PostCard
-                                post={post}
-                                onPostDeleted={handlePostDeleted}
-                                showDeleteModal={true}
-                                currentUserId={user?.id}
-                                networksMap={createNetworksMap()}
-                              />
-                            </Box>
-                          ))}
-                        </SimpleGrid>
-                      </Box>
-
-                      {/* Pagination */}
-                      {renderPagination()}
-
-                      {/* Page Info */}
-                      <Text
-                        textAlign="center"
-                        fontSize={{ base: "xs", md: "sm" }}
-                        color={useColorModeValue('gray.600', 'gray.400')}
-                        mt={4}
-                        wordBreak="break-word"
-                      >
-                        Stránka {currentPage} z {totalPages}
-                        ({Math.min((currentPage - 1) * postsPerPage + 1, totalPosts)}-{Math.min(currentPage * postsPerPage, totalPosts)} z {totalPosts} příspěvků)
+              {/* Tab Content - Moje příspěvky */}
+              <TabsContent value="my-posts" p={{ base: 4, md: 6 }}>
+                {/* Error Message */}
+                {error && (
+                  <Box
+                    p={3}
+                    bg={{ base: "red.50", _dark: "red.900" }}
+                    borderRadius="md"
+                    borderWidth="1px"
+                    borderColor={{ base: "red.200", _dark: "red.700" }}
+                    mb={6}
+                  >
+                    <VStack align="start" gap={2}>
+                      <Text fontWeight="bold" color={{ base: "red.800", _dark: "red.200" }}>
+                        Chyba při načítání příspěvků!
                       </Text>
-                    </>
-                  )}
-                </TabPanel>
-
-                {/* Tab 2: Síťové příspěvky */}
-                <TabPanel p={{ base: 4, md: 6 }} w="100%">
-                  {!networksLoading && (
-                    <>
-                      {networks.length > 0 && (
-                        <Box mb={6} w="100%" overflow="hidden">
-                          <VStack
-                            spacing={3}
-                            align="stretch"
-                            w="100%"
-                            display={{ base: "flex", md: "none" }}
-                          >
-                            <Text fontWeight="medium" fontSize="sm">
-                              Sociální síť:
-                            </Text>
-                            <Select
-                              value={selectedNetworkId || ''}
-                              onChange={handleNetworkChange}
-                              size="sm"
-                              w="100%"
-                              bg={useColorModeValue('white', 'gray.700')}
-                              color={useColorModeValue('black', 'white')}
-                              _focus={{
-                                borderColor: useColorModeValue('blue.500', 'blue.300'),
-                                boxShadow: useColorModeValue('0 0 0 1px blue.500', '0 0 0 1px blue.300'),
-                              }}
-                            >
-                              {networks.map((network) => (
-                                <option
-                                  key={network.networkId}
-                                  value={network.networkId}
-                                  style={{
-                                    backgroundColor: useColorModeValue('#ffffff', '#2D3748'),
-                                    color: useColorModeValue('#000000', '#ffffff')
-                                  }}
-                                >
-                                  {network.networkName}
-                                  {'permission' in network && network.permission && (
-                                    ` (${network.permission})`
-                                  )}
-                                </option>
-                              ))}
-                            </Select>
-                            {selectedNetworkId && (
-                              <Badge
-                                colorScheme="blue"
-                                variant="subtle"
-                                alignSelf="flex-start"
-                                wordBreak="break-word"
-                              >
-                                {getSelectedNetworkName()}
-                              </Badge>
-                            )}
-                          </VStack>
-
-                          <HStack
-                            spacing={4}
-                            align="center"
-                            flexWrap="wrap"
-                            w="100%"
-                            display={{ base: "none", md: "flex" }}
-                          >
-                            <Text fontWeight="medium">Sociální síť:</Text>
-                            <Select
-                              value={selectedNetworkId || ''}
-                              onChange={handleNetworkChange}
-                              width="auto"
-                              minW="200px"
-                              bg={useColorModeValue('white', 'gray.700')}
-                              color={useColorModeValue('black', 'white')}
-                              _focus={{
-                                borderColor: useColorModeValue('blue.500', 'blue.300'),
-                                boxShadow: useColorModeValue('0 0 0 1px blue.500', '0 0 0 1px blue.300'),
-                              }}
-                            >
-                              {networks.map((network) => (
-                                <option
-                                  key={network.networkId}
-                                  value={network.networkId}
-                                  style={{
-                                    backgroundColor: useColorModeValue('#ffffff', '#2D3748'),
-                                    color: useColorModeValue('#000000', '#ffffff')
-                                  }}
-                                >
-                                  {network.networkName}
-                                  {'permission' in network && network.permission && (
-                                    ` (${network.permission})`
-                                  )}
-                                </option>
-                              ))}
-                            </Select>
-                            {selectedNetworkId && (
-                              <Badge colorScheme="blue" variant="subtle">
-                                {getSelectedNetworkName()}
-                              </Badge>
-                            )}
-                          </HStack>
-                        </Box>
-                      )}
-
-                      {/* Error Message pro network příspěvky */}
-                      {networkError && (
-                        <Alert status="error" borderRadius="md" mb={6}>
-                          <AlertIcon />
-                          <Box w="100%">
-                            <Text
-                              fontWeight="bold"
-                              wordBreak="break-word"
-                              fontSize={{ base: "sm", md: "md" }}
-                            >
-                              Chyba při načítání příspěvků ze sítě!
-                            </Text>
-                            <Text
-                              wordBreak="break-word"
-                              fontSize={{ base: "sm", md: "md" }}
-                            >
-                              {networkError}
-                            </Text>
-                          </Box>
-                        </Alert>
-                      )}
-
-                      {/* Network posts content */}
-                      {networkLoading ? (
-                        <Box display="flex" justifyContent="center" py={12}>
-                          <VStack spacing={4}>
-                            <Spinner size="lg" color="blue.500" />
-                            <Text fontSize={{ base: "sm", md: "md" }}>
-                              Načítání příspěvků ze sítě...
-                            </Text>
-                          </VStack>
-                        </Box>
-                      ) : networks.length === 0 ? (
-                        <Box
-                          textAlign="center"
-                          py={{ base: 8, md: 12 }}
-                          borderWidth="1px"
-                          borderRadius="lg"
-                          borderStyle="dashed"
-                          borderColor={useColorModeValue('gray.300', 'gray.600')}
-                          w="100%"
-                        >
-                          <VStack spacing={4} px={{ base: 4, md: 0 }}>
-                            <Text
-                              fontSize={{ base: "md", md: "lg" }}
-                              fontWeight="medium"
-                              wordBreak="break-word"
-                            >
-                              Nemáte přístup k žádným sociálním sítím
-                            </Text>
-                            <Text
-                              color={useColorModeValue('gray.600', 'gray.400')}
-                              fontSize={{ base: "sm", md: "md" }}
-                              wordBreak="break-word"
-                            >
-                              Vytvořte si vlastní sociální síť nebo požádejte o přístup
-                            </Text>
-                          </VStack>
-                        </Box>
-                      ) : networkPosts.length === 0 && !networkError ? (
-                        <Box
-                          textAlign="center"
-                          py={{ base: 8, md: 12 }}
-                          borderWidth="1px"
-                          borderRadius="lg"
-                          borderStyle="dashed"
-                          borderColor={useColorModeValue('gray.300', 'gray.600')}
-                          w="100%"
-                        >
-                          <VStack spacing={4} px={{ base: 4, md: 0 }}>
-                            <Text
-                              fontSize={{ base: "md", md: "lg" }}
-                              fontWeight="medium"
-                              wordBreak="break-word"
-                            >
-                              Zatím žádné příspěvky
-                            </Text>
-                            <Text
-                              color={useColorModeValue('gray.600', 'gray.400')}
-                              fontSize={{ base: "sm", md: "md" }}
-                              wordBreak="break-word"
-                            >
-                              V této sociální síti zatím nejsou žádné příspěvky
-                            </Text>
-                          </VStack>
-                        </Box>
-                      ) : (
-                        <>
-                          <Box w="100%" overflow="hidden" py={2}>
-                            <SimpleGrid
-                              columns={{ base: 1, lg: 2, xl: 3 }}
-                              spacing={{ base: 4, md: 6 }}
-                              w="100%"
-                            >
-                              {networkPosts.map((post) => (
-                                <Box key={post.postId} w="100%" overflow="hidden" py={2}>
-                                  <PostCard
-                                    post={post}
-                                    onPostDeleted={handlePostDeleted}
-                                    showDeleteModal={true}
-                                    permissions={getNetworkPostPermissions(post)}
-                                    networkName={getSelectedNetworkName()}
-                                    currentUserId={user?.id}
-                                    networksMap={createNetworksMap()}
-                                  />
-                                </Box>
-                              ))}
-                            </SimpleGrid>
-                          </Box>
-
-                          {/* Pagination pro network příspěvky */}
-                          {renderNetworkPagination()}
-
-                          {/* Page Info pro network příspěvky */}
-                          <Text
-                            textAlign="center"
-                            fontSize={{ base: "xs", md: "sm" }}
-                            color={useColorModeValue('gray.600', 'gray.400')}
-                            mt={4}
-                            wordBreak="break-word"
-                          >
-                            Stránka {networkCurrentPage} z {networkTotalPages}
-                            ({Math.min((networkCurrentPage - 1) * networkPostsPerPage + 1, networkTotalPosts)}-{Math.min(networkCurrentPage * networkPostsPerPage, networkTotalPosts)} z {networkTotalPosts} příspěvků)
-                          </Text>
-                        </>
-                      )}
-                    </>
-                  )}
-                </TabPanel>
-
-                {/* Tab 3: Editované příspěvky */}
-                <TabPanel p={{ base: 4, md: 6 }} w="100%">
-                  {/* Error Message pro editované příspěvky */}
-                  {editorError && (
-                    <Alert status="error" borderRadius="md" mb={6}>
-                      <AlertIcon />
-                      <Box w="100%">
-                        <Text
-                          fontWeight="bold"
-                          wordBreak="break-word"
-                          fontSize={{ base: "sm", md: "md" }}
-                        >
-                          Chyba při načítání editovaných příspěvků!
-                        </Text>
-                        <Text
-                          wordBreak="break-word"
-                          fontSize={{ base: "sm", md: "md" }}
-                        >
-                          {editorError}
-                        </Text>
-                      </Box>
-                    </Alert>
-                  )}
-
-                  {!editorError && editorPosts.length === 0 ? (
-                    <Box
-                      textAlign="center"
-                      py={{ base: 8, md: 12 }}
-                      borderWidth="1px"
-                      borderRadius="lg"
-                      borderStyle="dashed"
-                      borderColor={useColorModeValue('gray.300', 'gray.600')}
-                      w="100%"
-                    >
-                      <VStack spacing={4} px={{ base: 4, md: 0 }}>
-                        <Text
-                          fontSize={{ base: "md", md: "lg" }}
-                          fontWeight="medium"
-                          wordBreak="break-word"
-                        >
-                          Zatím nemáte žádné editované příspěvky
-                        </Text>
-                        <Text
-                          color={useColorModeValue('gray.600', 'gray.400')}
-                          fontSize={{ base: "sm", md: "md" }}
-                          wordBreak="break-word"
-                        >
-                          Vaše editované příspěvky se zobrazí zde
-                        </Text>
-                      </VStack>
-                    </Box>
-                  ) : (
-                    <>
-                      <Box w="100%" overflow="hidden" py={2}>
-                        <SimpleGrid
-                          columns={{ base: 1, lg: 2, xl: 3 }}
-                          spacing={{ base: 4, md: 6 }}
-                          w="100%"
-                        >
-                          {editorPosts.map((post) => (
-                            <Box key={post.postId} w="100%" overflow="hidden" py={2}>
-                              <PostCard
-                                post={post}
-                                onPostDeleted={handlePostDeleted}
-                                showDeleteModal={true}
-                                currentUserId={user?.id}
-                                networksMap={createNetworksMap()}
-                              />
-                            </Box>
-                          ))}
-                        </SimpleGrid>
-                      </Box>
-
-                      {/* Pagination pro editované příspěvky */}
-                      {renderEditorPagination()}
-
-                      {/* Page Info pro editované příspěvky */}
-                      <Text
-                        textAlign="center"
-                        fontSize={{ base: "xs", md: "sm" }}
-                        color={useColorModeValue('gray.600', 'gray.400')}
-                        mt={4}
-                        wordBreak="break-word"
-                      >
-                        Stránka {editorCurrentPage} z {editorTotalPages}
-                        ({Math.min((editorCurrentPage - 1) * editorPostsPerPage + 1, editorTotalPosts)}-{Math.min(editorCurrentPage * editorPostsPerPage, editorTotalPosts)} z {editorTotalPosts} příspěvků)
+                      <Text fontSize="sm" color={{ base: "red.700", _dark: "red.300" }}>
+                        {error}
                       </Text>
-                    </>
-                  )}
-                </TabPanel>
-              </TabPanels>
-            </Tabs>
+                    </VStack>
+                  </Box>
+                )}
+
+                {/* Loading State */}
+                {loading ? (
+                  <Box display="flex" justifyContent="center" py={12}>
+                    <VStack gap={4}>
+                      <Spinner size="lg" color="blue.500" />
+                      <Text fontSize={{ base: "sm", md: "md" }}>
+                        Načítání příspěvků...
+                      </Text>
+                    </VStack>
+                  </Box>
+                ) : posts.length === 0 && !error ? (
+                  <Box
+                    textAlign="center"
+                    py={{ base: 8, md: 12 }}
+                    borderWidth="1px"
+                    borderRadius="lg"
+                    borderStyle="dashed"
+                    borderColor={{ base: "gray.300", _dark: "gray.600" }}
+                    w="100%"
+                  >
+                    <VStack gap={4} px={{ base: 4, md: 0 }}>
+                      <Text fontSize={{ base: "md", md: "lg" }} fontWeight="medium" wordBreak="break-word">
+                        Zatím nemáte žádné příspěvky
+                      </Text>
+                      <Text color={{ base: "gray.600", _dark: "gray.400" }} fontSize={{ base: "sm", md: "md" }} wordBreak="break-word">
+                        Vytvořte svůj první příspěvek pro sociální sítě
+                      </Text>
+                      <Button
+                        colorPalette="blue"
+                        onClick={handleCreateNew}
+                        loading={creatingPost}
+                        loadingText="Vytváří se..."
+                        size={{ base: "md", md: "lg" }}
+                        w={{ base: "100%", md: "auto" }}
+                        maxW={{ base: "300px", md: "none" }}
+                      >
+                        Vytvořit první příspěvek
+                      </Button>
+                    </VStack>
+                  </Box>
+                ) : (
+                  <>
+                    <SimpleGrid columns={{ base: 1, lg: 2, xl: 3 }} gap={{ base: 3, md: 4 }}>
+                      {posts.map((post) => (
+                        <PostCard
+                          key={post.postId}
+                          post={post}
+                          onPostDeleted={handlePostDeleted}
+                          showDeleteModal={true}
+                          currentUserId={user?.id}
+                          networksMap={createNetworksMap()}
+                        />
+                      ))}
+                    </SimpleGrid>
+
+                    {renderPagination()}
+                  </>
+                )}
+              </TabsContent>
+
+              {/* Tab Content - Síťové příspěvky */}
+              <TabsContent value="network-posts" p={{ base: 4, md: 6 }}>
+                {renderNetworkPosts()}
+              </TabsContent>
+
+              {/* Tab Content - Editované příspěvky */}
+              <TabsContent value="editor-posts" p={{ base: 4, md: 6 }}>
+                {renderEditorPosts()}
+              </TabsContent>
+            </TabsRoot>
           </Box>
         </VStack>
       </Box>

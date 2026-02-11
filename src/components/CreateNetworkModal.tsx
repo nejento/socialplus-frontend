@@ -1,28 +1,24 @@
 import React, { useState } from 'react';
 import {
-  Modal,
-  ModalOverlay,
-  ModalContent,
-  ModalHeader,
-  ModalFooter,
-  ModalBody,
-  ModalCloseButton,
+  DialogRoot,
+  DialogBackdrop,
+  DialogContent,
+  DialogPositioner,
+  DialogHeader,
+  DialogFooter,
+  DialogBody,
+  DialogCloseTrigger,
   Button,
-  FormControl,
-  FormLabel,
   Input,
   Textarea,
   VStack,
-  Alert,
-  AlertIcon,
-  AlertDescription,
   Text,
-  useToast,
   SimpleGrid,
   Box,
-  useColorModeValue,
+  Field
 } from '@chakra-ui/react';
 import { networkAPI } from '../services/api';
+import { toaster } from './ui/toaster';
 import { NetworkType } from '@/types';
 
 // Network type configurations
@@ -40,26 +36,21 @@ const NETWORK_TYPES: {
 ];
 
 interface CreateNetworkModalProps {
-  isOpen: boolean;
+  open: boolean;
   onClose: () => void;
   onNetworkCreated: (networkId: number) => void;
 }
 
 const CreateNetworkModal: React.FC<CreateNetworkModalProps> = ({
-  isOpen,
+  open,
   onClose,
-  onNetworkCreated,
+  onNetworkCreated
 }) => {
   const [networkType, setNetworkType] = useState<NetworkType | null>(null);
   const [networkName, setNetworkName] = useState('');
   const [networkNote, setNetworkNote] = useState('');
-  const [isLoading, setIsLoading] = useState(false);
+  const [loading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const toast = useToast();
-
-  const selectedBg = useColorModeValue('blue.50', 'blue.900');
-  const selectedBorder = useColorModeValue('blue.500', 'blue.300');
-  const hoverBg = useColorModeValue('gray.50', 'gray.700');
 
   const handleClose = () => {
     setNetworkType(null);
@@ -87,15 +78,14 @@ const CreateNetworkModal: React.FC<CreateNetworkModalProps> = ({
       const response = await networkAPI.createNetwork({
         networkType,
         networkName: networkName.trim(),
-        networkNote: networkNote.trim(),
+        networkNote: networkNote.trim()
       });
 
-      toast({
+      toaster.create({
         title: 'Síť byla vytvořena',
         description: `Sociální síť "${networkName}" byla úspěšně vytvořena`,
-        status: 'success',
-        duration: 5000,
-        isClosable: true,
+        type: 'success',
+        duration: 5000
       });
 
       onNetworkCreated(response.data.networkId);
@@ -117,108 +107,118 @@ const CreateNetworkModal: React.FC<CreateNetworkModalProps> = ({
   };
 
   return (
-    <Modal isOpen={isOpen} onClose={handleClose} size="lg">
-      <ModalOverlay />
-      <ModalContent>
-        <ModalHeader>Vytvořit novou sociální síť</ModalHeader>
-        <ModalCloseButton />
+    <DialogRoot open={open} onOpenChange={(e) => !e.open && handleClose()} size="lg">
+      <DialogBackdrop />
+      <DialogPositioner>
+        <DialogContent>
+          <DialogHeader>Vytvořit novou sociální síť</DialogHeader>
+          <DialogCloseTrigger />
 
-        <ModalBody>
-          <VStack spacing={6}>
-            {error && (
-              <Alert status="error" borderRadius="md">
-                <AlertIcon />
-                <AlertDescription>{error}</AlertDescription>
-              </Alert>
-            )}
+          <DialogBody>
+            <VStack gap={6}>
+              {error && (
+                <Box
+                  p={3}
+                  bg={{ base: "red.50", _dark: "red.900" }}
+                  borderRadius="md"
+                  borderWidth="1px"
+                  borderColor={{ base: "red.200", _dark: "red.700" }}
+                >
+                  <Text color={{ base: "red.800", _dark: "red.200" }} fontSize="sm">
+                    {error}
+                  </Text>
+                </Box>
+              )}
 
-            {/* Network Type Selection */}
-            <FormControl isRequired>
-              <FormLabel fontWeight="bold">Typ sociální sítě</FormLabel>
-              <SimpleGrid columns={{ base: 1, md: 2 }} spacing={3}>
-                {NETWORK_TYPES.map((network) => (
-                  <Box
-                    key={network.type}
-                    as="button"
-                    type="button"
-                    p={4}
-                    borderWidth="2px"
-                    borderRadius="lg"
-                    borderColor={networkType === network.type ? selectedBorder : 'gray.200'}
-                    bg={networkType === network.type ? selectedBg : 'transparent'}
-                    cursor="pointer"
-                    transition="all 0.2s"
-                    _hover={{
-                      bg: networkType === network.type ? selectedBg : hoverBg,
-                      borderColor: networkType === network.type ? selectedBorder : 'gray.300',
-                    }}
-                    onClick={() => setNetworkType(network.type)}
-                    textAlign="left"
-                  >
-                    <VStack align="start" spacing={2}>
-                      <Text fontWeight="bold" fontSize="sm" color={networkType === network.type ? `${network.color}.600` : 'inherit'}>
-                        {network.displayName}
-                      </Text>
-                      <Text fontSize="xs" color={useColorModeValue('gray.600', 'gray.400')}>
-                        {network.description}
-                      </Text>
-                    </VStack>
-                  </Box>
-                ))}
-              </SimpleGrid>
-              <Text fontSize="xs" color="gray.500" mt={2}>
-                Typ sítě nelze po vytvoření změnit
-              </Text>
-            </FormControl>
+              {/* Network Type Selection */}
+              <Field.Root required>
+                <Field.Label fontWeight="bold">Typ sociální sítě</Field.Label>
+                <SimpleGrid columns={{ base: 1, md: 2 }} gap={3}>
+                  {NETWORK_TYPES.map((network) => (
+                    <Button
+                      key={network.type}
+                      variant="outline"
+                      p={4}
+                      height="auto"
+                      borderWidth="2px"
+                      borderRadius="lg"
+                      borderColor={networkType === network.type ? { base: "blue.500", _dark: "blue.300" } : { base: "gray.200", _dark: "gray.600" }}
+                      bg={networkType === network.type ? { base: "blue.50", _dark: "blue.900" } : 'transparent'}
+                      cursor="pointer"
+                      transition="all 0.2s"
+                      _hover={{
+                        bg: networkType === network.type ? { base: "blue.50", _dark: "blue.900" } : { base: "gray.50", _dark: "gray.700" },
+                        borderColor: networkType === network.type ? { base: "blue.500", _dark: "blue.300" } : { base: "gray.300", _dark: "gray.500" }
+                      }}
+                      onClick={() => setNetworkType(network.type)}
+                      textAlign="left"
+                      justifyContent="flex-start"
+                    >
+                      <VStack align="start" gap={2}>
+                        <Text fontWeight="bold" fontSize="sm" color={networkType === network.type ? `${network.color}.600` : 'inherit'}>
+                          {network.displayName}
+                        </Text>
+                        <Text fontSize="xs" color={{ base: "gray.600", _dark: "gray.400" }}>
+                          {network.description}
+                        </Text>
+                      </VStack>
+                    </Button>
+                  ))}
+                </SimpleGrid>
+                <Text fontSize="xs" color="gray.500" mt={2}>
+                  Typ sítě nelze po vytvoření změnit
+                </Text>
+              </Field.Root>
 
-            {/* Network Name */}
-            <FormControl isRequired>
-              <FormLabel>Název sociální sítě</FormLabel>
-              <Input
-                value={networkName}
-                onChange={(e) => setNetworkName(e.target.value)}
-                placeholder="Zadejte název sítě"
-                maxLength={100}
-              />
-              <Text fontSize="xs" color="gray.500" mt={1}>
-                Název musí být unikátní
-              </Text>
-            </FormControl>
+              {/* Network Name */}
+              <Field.Root required>
+                <Field.Label>Název sociální sítě</Field.Label>
+                <Input
+                  value={networkName}
+                  onChange={(e) => setNetworkName(e.target.value)}
+                  placeholder="Zadejte název sítě"
+                  maxLength={100}
+                />
+                <Text fontSize="xs" color="gray.500" mt={1}>
+                  Název musí být unikátní
+                </Text>
+              </Field.Root>
 
-            {/* Network Note */}
-            <FormControl>
-              <FormLabel>Poznámka</FormLabel>
-              <Textarea
-                value={networkNote}
-                onChange={(e) => setNetworkNote(e.target.value)}
-                placeholder="Volitelná poznámka k sociální síti"
-                rows={4}
-                maxLength={500}
-                resize="vertical"
-              />
-              <Text fontSize="xs" color="gray.500" mt={1}>
-                {networkNote.length}/500 znaků
-              </Text>
-            </FormControl>
-          </VStack>
-        </ModalBody>
+              {/* Network Note */}
+              <Field.Root>
+                <Field.Label>Poznámka</Field.Label>
+                <Textarea
+                  value={networkNote}
+                  onChange={(e) => setNetworkNote(e.target.value)}
+                  placeholder="Volitelná poznámka k sociální síti"
+                  rows={4}
+                  maxLength={500}
+                  resize="vertical"
+                />
+                <Text fontSize="xs" color="gray.500" mt={1}>
+                  {networkNote.length}/500 znaků
+                </Text>
+              </Field.Root>
+            </VStack>
+          </DialogBody>
 
-        <ModalFooter>
-          <Button variant="ghost" mr={3} onClick={handleClose}>
-            Zrušit
-          </Button>
-          <Button
-            colorScheme="green"
-            onClick={handleSubmit}
-            isLoading={isLoading}
-            loadingText="Vytváří se..."
-            disabled={!networkType || !networkName.trim()}
-          >
-            Vytvořit síť
-          </Button>
-        </ModalFooter>
-      </ModalContent>
-    </Modal>
+          <DialogFooter gap={3}>
+            <Button variant="ghost" onClick={handleClose}>
+              Zrušit
+            </Button>
+            <Button
+              colorPalette="green"
+              onClick={handleSubmit}
+              loading={loading}
+              loadingText="Vytváří se..."
+              disabled={!networkType || !networkName.trim()}
+            >
+              Vytvořit síť
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </DialogPositioner>
+    </DialogRoot>
   );
 };
 

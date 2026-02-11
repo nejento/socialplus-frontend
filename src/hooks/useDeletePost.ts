@@ -1,6 +1,6 @@
 import { useState } from 'react';
-import { useToast } from '@chakra-ui/react';
 import { postsAPI } from '../services/api';
+import { toaster } from '../components/ui/toaster';
 
 interface UseDeletePostOptions {
   onSuccess?: (postId: number) => void;
@@ -19,7 +19,6 @@ export const useDeletePost = (options: UseDeletePostOptions = {}) => {
     isDeleting: false,
   });
 
-  const toast = useToast();
   const { onSuccess, onError, showModal = true } = options;
 
   const openDeleteModal = (postId: number) => {
@@ -54,12 +53,11 @@ export const useDeletePost = (options: UseDeletePostOptions = {}) => {
 
       await postsAPI.deletePost(targetPostId);
 
-      toast({
+      toaster.create({
         title: 'Příspěvek smazán',
         description: `Příspěvek #${targetPostId} byl úspěšně smazán.`,
-        status: 'success',
+        type: 'success',
         duration: 3000,
-        isClosable: true,
       });
 
       if (onSuccess) {
@@ -74,12 +72,11 @@ export const useDeletePost = (options: UseDeletePostOptions = {}) => {
 
       const errorMessage = error.response?.data?.message || 'Nepodařilo se smazat příspěvek';
 
-      toast({
+      toaster.create({
         title: 'Chyba při mazání',
         description: errorMessage,
-        status: 'error',
+        type: 'error',
         duration: 5000,
-        isClosable: true,
       });
 
       if (onError) {

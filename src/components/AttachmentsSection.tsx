@@ -1,7 +1,5 @@
 import React from 'react';
 import {
-  FormControl,
-  FormLabel,
   VStack,
   HStack,
   Input,
@@ -10,9 +8,8 @@ import {
   Box,
   SimpleGrid,
   Spinner,
-  useColorModeValue
+  Heading
 } from '@chakra-ui/react';
-import { AddIcon } from '@chakra-ui/icons';
 import { PostFile, NetworkInfo, FileUpload } from '@/types';
 import { FileAttachment } from './FileAttachment';
 
@@ -43,16 +40,14 @@ export const AttachmentsSection: React.FC<AttachmentsSectionProps> = ({
   isUploadDisabled,
   maxFileSizeFormatted
 }) => {
-  const textColor = useColorModeValue('gray.800', 'white');
-
   return (
-    <FormControl>
-      <FormLabel color={textColor} fontSize={{ base: 'md', md: 'lg' }}>
+    <>
+      <Heading color={{ base: "gray.800", _dark: "white" }} fontSize={{ base: 'md', md: 'lg' }}>
         Přílohy
-      </FormLabel>
+      </Heading>
 
-      <VStack spacing={4} align="stretch">
-        <HStack spacing={4}>
+      <VStack gap={4} align="stretch">
+        <HStack gap={4}>
           <Input
             type="file"
             accept="*/*"
@@ -62,24 +57,22 @@ export const AttachmentsSection: React.FC<AttachmentsSectionProps> = ({
             id="file-upload"
           />
           <Button
-            as="label"
-            htmlFor="file-upload"
+            asChild
             cursor="pointer"
-            leftIcon={<AddIcon />}
             size={{ base: 'sm', md: 'md' }}
-            isDisabled={isUploadDisabled}
+            disabled={isUploadDisabled}
           >
-            Nahrát soubory
+            <label htmlFor="file-upload">Nahrát soubory</label>
           </Button>
-          <Text fontSize="xs" color={useColorModeValue('gray.600', 'gray.400')}>
+          <Text fontSize="xs" color={{ base: 'gray.600', _dark: 'gray.400' }}>
             Maximální velikost: {maxFileSizeFormatted}
           </Text>
         </HStack>
 
         {/* Zobrazení nahrávaných souborů */}
         {uploadingFiles.length > 0 && (
-          <VStack spacing={2} align="stretch">
-            <Text fontSize="sm" fontWeight="medium" color={textColor}>
+          <VStack gap={2} align="stretch">
+            <Text fontSize="sm" fontWeight="medium" color={{ base: "gray.800", _dark: "white" }}>
               Nahrávání...
             </Text>
             {uploadingFiles.map((upload, index) => (
@@ -88,19 +81,19 @@ export const AttachmentsSection: React.FC<AttachmentsSectionProps> = ({
                 p={3}
                 borderWidth="1px"
                 borderRadius="md"
-                borderColor={useColorModeValue('blue.200', 'blue.600')}
-                bg={useColorModeValue('blue.50', 'blue.900')}
+                borderColor={{ base: 'blue.200', _dark: 'blue.600' }}
+                bg={{ base: 'blue.50', _dark: 'blue.900' }}
               >
                 <HStack justify="space-between">
-                  <VStack align="start" spacing={1} flex={1}>
-                    <Text fontSize="sm" fontWeight="medium" isTruncated>
+                  <VStack align="start" gap={1} flex={1}>
+                    <Text fontSize="sm" fontWeight="medium" truncate>
                       {upload.file.name}
                     </Text>
-                    <Text fontSize="xs" color={useColorModeValue('gray.600', 'gray.400')}>
+                    <Text fontSize="xs" color={{ base: 'gray.600', _dark: 'gray.400' }}>
                       {(upload.file.size / 1024 / 1024).toFixed(2)} MB
                     </Text>
                   </VStack>
-                  <HStack spacing={2}>
+                  <HStack gap={2}>
                     {upload.uploading ? (
                       <Spinner size="sm" color="blue.500" />
                     ) : upload.error ? (
@@ -117,13 +110,13 @@ export const AttachmentsSection: React.FC<AttachmentsSectionProps> = ({
 
         {/* Zobrazení existujících souborů */}
         {postFiles.length > 0 && (
-          <VStack spacing={3} align="stretch">
-            <Text fontSize="sm" fontWeight="medium" color={textColor}>
+          <VStack gap={3} align="stretch">
+            <Text fontSize="sm" fontWeight="medium" color={{ base: "gray.800", _dark: "white" }}>
               Nahrané soubory ({postFiles.length})
             </Text>
             <SimpleGrid
               columns={{ base: 1, md: 2 }}
-              spacing={{ base: 3, md: 4 }}
+              gap={{ base: 3, md: 4 }}
             >
               {postFiles.map((file) => (
                 <FileAttachment
@@ -141,6 +134,6 @@ export const AttachmentsSection: React.FC<AttachmentsSectionProps> = ({
           </VStack>
         )}
       </VStack>
-    </FormControl>
+    </>
   );
 };

@@ -1,10 +1,11 @@
 import React from 'react';
-import { ChakraProvider } from '@chakra-ui/react';
+import { ChakraProvider, defaultSystem } from '@chakra-ui/react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { MainLayout } from './components/Layout/MainLayout';
 import ErrorBoundary from './components/ErrorBoundary';
+import { ColorModeProvider } from './components/ui/color-mode';
 import LoginPage from './pages/LoginPage';
 import HomePage from './pages/HomePage';
 import PostsPage from './pages/PostsPage';
@@ -18,13 +19,12 @@ import HelpTwitterPage from './pages/HelpTwitterPage';
 import HelpThreadsPage from './pages/HelpThreadsPage';
 import HelpMastodonPage from './pages/HelpMastodonPage';
 import HelpBlueskyPage from './pages/HelpBlueskyPage';
-import theme from './theme';
 
 // Komponenta pro ochranu privátních tras
 const PrivateRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const { user, isLoading } = useAuth();
+  const { user, loading } = useAuth();
 
-  if (isLoading) {
+  if (loading) {
     return <div>Loading...</div>; // Nebo nějaký loading spinner
   }
 
@@ -33,9 +33,9 @@ const PrivateRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => 
 
 // Komponenta pro přesměrování přihlášených uživatelů z login stránky
 const PublicRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const { user, isLoading } = useAuth();
+  const { user, loading } = useAuth();
 
-  if (isLoading) {
+  if (loading) {
     return <div>Loading...</div>;
   }
 
@@ -173,22 +173,22 @@ const queryClient = new QueryClient({
     queries: {
       retry: 1,
       staleTime: 5 * 60 * 1000, // 5 minut
-    },
-  },
-});
+    } } });
 
 const App: React.FC = () => {
   return (
-    <ChakraProvider theme={theme}>
-      <QueryClientProvider client={queryClient}>
-        <AuthProvider>
-          <Router>
-            <ErrorBoundary>
-              <AppRoutes />
-            </ErrorBoundary>
-          </Router>
-        </AuthProvider>
-      </QueryClientProvider>
+    <ChakraProvider value={defaultSystem}>
+      <ColorModeProvider>
+        <QueryClientProvider client={queryClient}>
+          <AuthProvider>
+            <Router>
+              <ErrorBoundary>
+                <AppRoutes />
+              </ErrorBoundary>
+            </Router>
+          </AuthProvider>
+        </QueryClientProvider>
+      </ColorModeProvider>
     </ChakraProvider>
   );
 };

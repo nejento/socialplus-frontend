@@ -4,37 +4,29 @@ import {
   Button,
   HStack,
   Text,
-  useColorModeValue,
   Spinner,
   Wrap,
-  WrapItem,
-} from '@chakra-ui/react';
+  WrapItem } from '@chakra-ui/react';
 import { NetworkInfo } from '@/types';
 
 interface NetworkSelectorProps {
   availableNetworks: NetworkInfo[];
   selectedNetworkIds: number[];
   onNetworkToggle: (networkId: number, isSelected: boolean) => void;
-  isLoading?: boolean;
-  isDisabled?: boolean;
+  loading?: boolean;
+  disabled?: boolean;
 }
 
 const NetworkSelector: React.FC<NetworkSelectorProps> = ({
   availableNetworks,
   selectedNetworkIds,
   onNetworkToggle,
-  isLoading = false,
-  isDisabled = false,
+  loading = false,
+  disabled = false
 }) => {
-  const bgColor = useColorModeValue('white', 'gray.700');
-  const borderColor = useColorModeValue('gray.200', 'gray.600');
-  const selectedBg = useColorModeValue('blue.500', 'blue.600');
-  const selectedColor = useColorModeValue('white', 'white');
-  const ownerTextColor = useColorModeValue('gray.600', 'gray.400');
-
-  if (isLoading) {
+  if (loading) {
     return (
-      <HStack spacing={2}>
+      <HStack gap={2}>
         <Spinner size="sm" />
         <Text fontSize="sm">Načítání sítí...</Text>
       </HStack>
@@ -43,7 +35,7 @@ const NetworkSelector: React.FC<NetworkSelectorProps> = ({
 
   if (availableNetworks.length === 0) {
     return (
-      <Text fontSize="sm" color={ownerTextColor}>
+      <Text fontSize="sm" color={{ base: "gray.600", _dark: "gray.400" }}>
         Žádné dostupné sociální sítě
       </Text>
     );
@@ -54,7 +46,7 @@ const NetworkSelector: React.FC<NetworkSelectorProps> = ({
       <Text fontSize="sm" fontWeight="medium" mb={2}>
         Vyberte sociální sítě:
       </Text>
-      <Wrap spacing={2}>
+      <Wrap gap={2}>
         {availableNetworks.map((network) => {
           const isSelected = selectedNetworkIds.includes(network.id);
 
@@ -63,13 +55,13 @@ const NetworkSelector: React.FC<NetworkSelectorProps> = ({
               <Button
                 size="sm"
                 variant={isSelected ? "solid" : "outline"}
-                bg={isSelected ? selectedBg : bgColor}
-                color={isSelected ? selectedColor : undefined}
-                borderColor={borderColor}
+                bg={isSelected ? { base: "blue.500", _dark: "blue.600" } : { base: "white", _dark: "gray.700" }}
+                color={isSelected ? "white" : undefined}
+                borderColor={{ base: "gray.200", _dark: "gray.600" }}
                 onClick={() => onNetworkToggle(network.id, !isSelected)}
-                isDisabled={isDisabled}
+                disabled={disabled}
                 _hover={{
-                  bg: isSelected ? selectedBg : useColorModeValue('gray.50', 'gray.600'),
+                  bg: isSelected ? { base: "blue.500", _dark: "blue.600" } : { base: "gray.50", _dark: "gray.600" }
                 }}
               >
                 <Box textAlign="left">
@@ -77,7 +69,7 @@ const NetworkSelector: React.FC<NetworkSelectorProps> = ({
                     {network.networkName}
                   </Text>
                   {!network.isOwned && network.owner && (
-                    <Text fontSize="xs" color={isSelected ? selectedColor : ownerTextColor}>
+                    <Text fontSize="xs" color={isSelected ? "white" : { base: "gray.600", _dark: "gray.400" }}>
                       ({network.owner.username})
                     </Text>
                   )}

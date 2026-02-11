@@ -2,12 +2,12 @@ import React from 'react';
 import {
   Box,
   Flex,
-  useColorModeValue,
   IconButton,
   HStack,
-  useDisclosure
+  useDisclosure,
+  Icon
 } from '@chakra-ui/react';
-import { HamburgerIcon } from '@chakra-ui/icons';
+import { MdMenu } from 'react-icons/md';
 import { useAuth } from '../../contexts/AuthContext';
 import { Sidebar } from './Sidebar';
 import ErrorBoundary from '../ErrorBoundary';
@@ -17,13 +17,10 @@ interface MainLayoutProps {
 }
 
 export const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
-  const { user, isLoading } = useAuth();
-  const bgColor = useColorModeValue('gray.50', 'gray.900');
-  const headerBg = useColorModeValue('white', 'gray.800');
-  const borderColor = useColorModeValue('gray.200', 'gray.700');
-  const { isOpen, onOpen, onClose } = useDisclosure();
+  const { user, loading } = useAuth();
+  const { open, onOpen, onClose } = useDisclosure();
 
-  if (isLoading) {
+  if (loading) {
     return (
       <Flex justify="center" align="center" minH="100vh">
         <Box>Načítání...</Box>
@@ -36,9 +33,9 @@ export const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
   }
 
   return (
-    <Flex minH="100vh" bg={bgColor}>
+    <Flex minH="100vh" bg={{ base: "gray.50", _dark: "gray.900" }}>
       <ErrorBoundary>
-        <Sidebar isOpen={isOpen} onClose={onClose} />
+        <Sidebar isOpen={open} onClose={onClose} />
       </ErrorBoundary>
 
       {/* Mobile Header */}
@@ -48,9 +45,9 @@ export const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
         left={0}
         right={0}
         zIndex={10}
-        bg={headerBg}
+        bg={{ base: "white", _dark: "gray.800" }}
         borderBottom="1px"
-        borderColor={borderColor}
+        borderColor={{ base: "gray.200", _dark: "gray.600" }}
         display={{ base: 'block', md: 'none' }}
         px={4}
         py={3}
@@ -58,10 +55,11 @@ export const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
         <HStack justify="space-between">
           <IconButton
             aria-label="Otevřít menu"
-            icon={<HamburgerIcon />}
             variant="ghost"
             onClick={onOpen}
-          />
+          >
+            <Icon as={MdMenu} />
+          </IconButton>
         </HStack>
       </Box>
 

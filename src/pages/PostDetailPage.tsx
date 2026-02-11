@@ -5,20 +5,14 @@ import {
   VStack,
   HStack,
   Text,
-  useColorModeValue,
   Heading,
   Spinner,
-  Alert,
-  AlertIcon,
   Badge,
-  Card,
-  CardHeader,
   IconButton,
-  useToast,
-  Flex,
+  Flex
 } from '@chakra-ui/react';
 import { useParams, useNavigate } from 'react-router';
-import { EditIcon, ArrowBackIcon, DeleteIcon, ViewIcon } from '@chakra-ui/icons';
+import { MdDelete } from 'react-icons/md';
 import { postsAPI, networkAPI } from '../services/api';
 import { useAuth } from '../contexts/AuthContext';
 import DeletePostModal from '../components/DeletePostModal';
@@ -26,11 +20,12 @@ import PostStatsChart from '../components/PostStatsChart';
 import PostCurrentMetrics from '../components/PostCurrentMetrics';
 import PostContents from '../components/PostContents';
 import PostAttachments from '../components/PostAttachments';
+import { toaster } from '../components/ui/toaster';
 import {
   NetworkInfo,
   User,
   PostDetailedListItem,
-  NetworkMetrics,
+  NetworkMetrics
 } from '@/types';
 
 interface PostDetailData {
@@ -42,7 +37,6 @@ interface PostDetailData {
 const PostDetailPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const toast = useToast();
   const { user } = useAuth();
 
   const [postData, setPostData] = useState<PostDetailData | null>(null);
@@ -53,8 +47,6 @@ const PostDetailPage: React.FC = () => {
 
   const [isDeleteModalOpen, setDeleteModalOpen] = useState(false);
 
-  const bgColor = useColorModeValue('gray.50', 'gray.900');
-  const textColor = useColorModeValue('gray.600', 'gray.300');
 
   useEffect(() => {
     if (id) {
@@ -86,8 +78,7 @@ const PostDetailPage: React.FC = () => {
           twitter: { color: 'blue' },
           mastodon: { color: 'purple' },
           bluesky: { color: 'blue' },
-          threads: { color: 'gray' },
-        };
+          threads: { color: 'gray' } };
 
         return stylingMap[networkType.toLowerCase()] || { color: 'gray' };
       };
@@ -127,12 +118,10 @@ const PostDetailPage: React.FC = () => {
     } catch (error) {
       console.error('Chyba při načítání detailu příspěvku:', error);
       setError('Nepodařilo se načíst detail příspěvku');
-      toast({
-        title: 'Chyba',
+      toaster.create({
+        title: 'Chyba při načítání',
         description: 'Nepodařilo se načíst detail příspěvku',
-        status: 'error',
-        duration: 5000,
-        isClosable: true,
+        type: 'error'
       });
     } finally {
       setLoading(false);
@@ -154,33 +143,27 @@ const PostDetailPage: React.FC = () => {
       const postId = parseInt(id);
 
       if (isNaN(postId)) {
-        toast({
+        toaster.create({
           title: 'Chyba',
           description: 'Neplatné ID příspěvku',
-          status: 'error',
-          duration: 3000,
-          isClosable: true,
+          type: 'error'
         });
         return;
       }
 
       await postsAPI.deletePost(postId);
-      toast({
-        title: 'Úspěch',
+      toaster.create({
+        title: 'Příspěvek smazán',
         description: 'Příspěvek byl úspěšně smazán',
-        status: 'success',
-        duration: 3000,
-        isClosable: true,
+        type: 'success'
       });
       navigate('/posts');
     } catch (error) {
       console.error('Chyba při mazání příspěvku:', error);
-      toast({
-        title: 'Chyba',
+      toaster.create({
+        title: 'Chyba při mazání',
         description: 'Nepodařilo se smazat příspěvek',
-        status: 'error',
-        duration: 3000,
-        isClosable: true,
+        type: 'error'
       });
     } finally {
       setDeleteModalOpen(false);
@@ -194,23 +177,19 @@ const PostDetailPage: React.FC = () => {
       setIsMonitorLoading(true);
       const response = await postsAPI.collectMonitorData(parseInt(id));
 
-      toast({
-        title: 'Úspěch',
+      toaster.create({
+        title: 'Data shromážděna',
         description: 'Data monitoringu byla úspěšně shromážděna',
-        status: 'success',
-        duration: 3000,
-        isClosable: true,
+        type: 'success'
       });
 
       console.log('Monitor data collected:', response.data);
     } catch (error) {
       console.error('Chyba při shromažďování dat monitoringu:', error);
-      toast({
-        title: 'Chyba',
+      toaster.create({
+        title: 'Chyba při shromažďování dat',
         description: 'Nepodařilo se shromáždit data monitoringu',
-        status: 'error',
-        duration: 3000,
-        isClosable: true,
+        type: 'error'
       });
     } finally {
       setIsMonitorLoading(false);
@@ -241,7 +220,7 @@ const PostDetailPage: React.FC = () => {
   if (loading) {
     return (
       <Box
-        bg={bgColor}
+        bg={{ base: "gray.50", _dark: "gray.900" }}
         minH="100vh"
         p={{ base: 4, md: 8 }}
         w="100%"
@@ -249,7 +228,7 @@ const PostDetailPage: React.FC = () => {
         overflow="hidden"
       >
         <Flex justify="center" align="center" minH="200px">
-          <VStack spacing={4}>
+          <VStack gap={4}>
             <Spinner size="xl" />
             <Text>Načítání detailu příspěvku...</Text>
           </VStack>
@@ -261,22 +240,21 @@ const PostDetailPage: React.FC = () => {
   if (error || !postData) {
     return (
       <Box
-        bg={bgColor}
+        bg={{ base: "gray.50", _dark: "gray.900" }}
         minH="100vh"
         p={{ base: 4, md: 8 }}
         w="100%"
         maxW="100vw"
         overflow="hidden"
       >
-        <VStack spacing={6} w="100%" maxW="100%">
+        <VStack gap={6} w="100%" maxW="100%">
           <VStack
-            spacing={3}
+            gap={3}
             align="stretch"
             w="100%"
             display={{ base: "flex", md: "none" }}
           >
             <Button
-              leftIcon={<ArrowBackIcon />}
               onClick={handleBack}
               size="sm"
               w="100%"
@@ -290,17 +268,26 @@ const PostDetailPage: React.FC = () => {
             width="100%"
             display={{ base: "none", md: "flex" }}
           >
-            <Button leftIcon={<ArrowBackIcon />} onClick={handleBack}>
+            <Button onClick={handleBack}>
               Zpět na příspěvky
             </Button>
           </HStack>
 
-          <Alert status="error" w="100%">
-            <AlertIcon />
-            <Text wordBreak="break-word" fontSize={{ base: "sm", md: "md" }}>
+          <Box
+            p={3}
+            bg={{ base: "red.50", _dark: "red.900" }}
+            borderRadius="md"
+            borderWidth="1px"
+            borderColor={{ base: "red.200", _dark: "red.700" }}
+            w="100%"
+          >
+            <Text fontWeight="bold" color={{ base: "red.800", _dark: "red.200" }} mb={1}>
+              Chyba
+            </Text>
+            <Text fontSize="sm" color={{ base: "red.700", _dark: "red.300" }} wordBreak="break-word">
               {error || 'Nepodařilo se načíst detail příspěvku'}
             </Text>
-          </Alert>
+          </Box>
         </VStack>
       </Box>
     );
@@ -308,8 +295,8 @@ const PostDetailPage: React.FC = () => {
 
   return (
     <Box
-      bg={bgColor}
       minH="100vh"
+      bg={{ base: "gray.50", _dark: "gray.900" }}
       w="100%"
       maxW="100vw"
       overflow="hidden"
@@ -319,18 +306,17 @@ const PostDetailPage: React.FC = () => {
         mx="auto"
         w="100%"
       >
-        <VStack spacing={6} align="stretch" w="100%" px={{ base: 0, md: 0 }}>
+        <VStack gap={6} align="stretch" w="100%" px={{ base: 0, md: 0 }}>
           {/* Header */}
-          <Box bg={useColorModeValue('white', 'gray.800')} p={{ base: 4, md: 6 }} borderRadius="lg" shadow="sm" w="100%" overflow="hidden">
-            <VStack spacing={4} align="stretch" w="100%">
+          <Box bg={{ base: "white", _dark: "gray.800" }} p={{ base: 4, md: 6 }} borderRadius="lg" shadow="sm" w="100%" overflow="hidden">
+            <VStack gap={4} align="stretch" w="100%">
               <VStack
-                spacing={3}
+                gap={3}
                 align="stretch"
                 w="100%"
                 display={{ base: "flex", md: "none" }}
               >
                 <Button
-                  leftIcon={<ArrowBackIcon />}
                   onClick={handleBack}
                   size="md"
                   variant="outline"
@@ -339,13 +325,12 @@ const PostDetailPage: React.FC = () => {
                   Zpět na příspěvky
                 </Button>
 
-                <VStack spacing={2} w="100%">
+                <VStack gap={2} w="100%">
                   {hasPublishedContent() && (
                     <Button
-                      leftIcon={<ViewIcon />}
-                      colorScheme="green"
+                      colorPalette="green"
                       onClick={handleCollectMonitorData}
-                      isLoading={isMonitorLoading}
+                      loading={isMonitorLoading}
                       loadingText="Shromažďuji..."
                       size="md"
                       w="100%"
@@ -355,10 +340,9 @@ const PostDetailPage: React.FC = () => {
                   )}
 
                   <Button
-                    leftIcon={<EditIcon />}
-                    colorScheme="blue"
+                    colorPalette="blue"
                     onClick={handleEdit}
-                    isDisabled={!canEditPost()}
+                    disabled={!canEditPost()}
                     size="md"
                     w="100%"
                   >
@@ -366,8 +350,7 @@ const PostDetailPage: React.FC = () => {
                   </Button>
 
                   <Button
-                    leftIcon={<DeleteIcon />}
-                    colorScheme="red"
+                    colorPalette="red"
                     variant="outline"
                     onClick={() => setDeleteModalOpen(true)}
                     size="md"
@@ -386,12 +369,12 @@ const PostDetailPage: React.FC = () => {
                 flexWrap="wrap"
                 gap={4}
               >
-                <VStack align="start" spacing={2}>
+                <VStack align="start" gap={2}>
                   <Heading size="xl" wordBreak="break-word">
                     Detail příspěvku #{postData.post?.postId}
                   </Heading>
                   <Text
-                    color={useColorModeValue('gray.600', 'gray.400')}
+                    color={{ base: "gray.600", _dark: "gray.400" }}
                     fontSize="lg"
                     wordBreak="break-word"
                   >
@@ -399,16 +382,15 @@ const PostDetailPage: React.FC = () => {
                   </Text>
                 </VStack>
 
-                <HStack spacing={3} flexWrap="wrap">
-                  <Button leftIcon={<ArrowBackIcon />} onClick={handleBack} size="lg">
+                <HStack gap={3} flexWrap="wrap">
+                  <Button onClick={handleBack} size="lg">
                     Zpět na příspěvky
                   </Button>
                   {hasPublishedContent() && (
                     <Button
-                      leftIcon={<ViewIcon />}
-                      colorScheme="green"
+                      colorPalette="green"
                       onClick={handleCollectMonitorData}
-                      isLoading={isMonitorLoading}
+                      loading={isMonitorLoading}
                       loadingText="Shromažďuji..."
                       size="lg"
                     >
@@ -417,8 +399,7 @@ const PostDetailPage: React.FC = () => {
                   )}
                   {canEditPost() ? (
                     <Button
-                      leftIcon={<EditIcon />}
-                      colorScheme="blue"
+                      colorPalette="blue"
                       onClick={handleEdit}
                       size="lg"
                     >
@@ -426,10 +407,9 @@ const PostDetailPage: React.FC = () => {
                     </Button>
                   ) : (
                     <Button
-                      leftIcon={<EditIcon />}
-                      colorScheme="blue"
+                      colorPalette="blue"
                       onClick={handleEdit}
-                      isDisabled
+                      disabled
                       size="lg"
                     >
                       Upravit příspěvek
@@ -437,23 +417,24 @@ const PostDetailPage: React.FC = () => {
                   )}
                   <IconButton
                     aria-label="Smazat příspěvek"
-                    icon={<DeleteIcon />}
-                    colorScheme="red"
+                    colorPalette="red"
                     variant="outline"
                     onClick={() => setDeleteModalOpen(true)}
                     size="lg"
-                  />
+                  >
+                    <MdDelete />
+                  </IconButton>
                 </HStack>
               </HStack>
             </VStack>
           </Box>
 
           {/* Informace o příspěvku */}
-          <Card w="100%" overflow="hidden">
-            <CardHeader p={{ base: 4, md: 6 }}>
-              <VStack spacing={4} align="stretch" w="100%">
+          <Box w="100%" overflow="hidden" bg={{ base: "white", _dark: "gray.800" }} borderRadius="lg" shadow="sm">
+            <Box p={{ base: 4, md: 6 }}>
+              <VStack gap={4} align="stretch" w="100%">
 
-                <VStack spacing={2} align="start" w="100%">
+                <VStack gap={2} align="start" w="100%">
                   <Heading
                     size={{ base: "md", md: "lg" }}
                     wordBreak="break-word"
@@ -462,31 +443,31 @@ const PostDetailPage: React.FC = () => {
                   </Heading>
                 </VStack>
 
-                <VStack spacing={4} align="stretch" w="100%">
+                <VStack gap={4} align="stretch" w="100%">
                   {/* Informace o autorovi */}
                   {postData.creator && (
                     <Box
                       p={{ base: 3, md: 4 }}
-                      bg={useColorModeValue('blue.50', 'blue.900')}
+                      bg={{ base: "blue.50", _dark: "blue.900" }}
                       borderRadius="md"
                       w="100%"
                       overflow="hidden"
                     >
-                      <VStack align="stretch" spacing={2}>
+                      <VStack align="stretch" gap={2}>
                         <Text
                           fontWeight="bold"
                           fontSize={{ base: "sm", md: "md" }}
-                          color={textColor}
+                          color={{ base: "gray.800", _dark: "white" }}
                         >
                           Autor příspěvku:
                         </Text>
 
                         <VStack
-                          spacing={2}
+                          gap={2}
                           align="stretch"
                           display={{ base: "flex", md: "none" }}
                         >
-                          <VStack align="start" spacing={1}>
+                          <VStack align="start" gap={1}>
                             <Text
                               fontWeight="medium"
                               fontSize="sm"
@@ -496,31 +477,31 @@ const PostDetailPage: React.FC = () => {
                             </Text>
                             <Text
                               fontSize="sm"
-                              color={textColor}
+                              color={{ base: "gray.800", _dark: "white" }}
                               wordBreak="break-word"
                             >
                               @{postData.creator.username}
                             </Text>
                           </VStack>
-                          <Badge colorScheme="purple" variant="outline" alignSelf="flex-start">
+                          <Badge colorPalette="purple" variant="outline" alignSelf="flex-start">
                             ID: {postData.creator.id}
                           </Badge>
                         </VStack>
 
                         <HStack
-                          spacing={3}
+                          gap={3}
                           display={{ base: "none", md: "flex" }}
                           flexWrap="wrap"
                         >
-                          <VStack align="start" spacing={1}>
+                          <VStack align="start" gap={1}>
                             <Text fontWeight="medium" fontSize="sm">
                               {postData.creator.displayname}
                             </Text>
-                            <Text fontSize="sm" color={textColor}>
+                            <Text fontSize="sm" color={{ base: "gray.800", _dark: "white" }}>
                               @{postData.creator.username}
                             </Text>
                           </VStack>
-                          <Badge colorScheme="purple" variant="outline">
+                          <Badge colorPalette="purple" variant="outline">
                             ID: {postData.creator.id}
                           </Badge>
                         </HStack>
@@ -532,28 +513,28 @@ const PostDetailPage: React.FC = () => {
                   {postData.post?.editors && postData.post.editors.length > 0 && (
                     <Box
                       p={{ base: 3, md: 4 }}
-                      bg={useColorModeValue('green.50', 'green.900')}
+                      bg={{ base: "green.50", _dark: "green.900" }}
                       borderRadius="md"
                       w="100%"
                       overflow="hidden"
                     >
-                      <VStack align="stretch" spacing={2}>
+                      <VStack align="stretch" gap={2}>
                         <Text
                           fontWeight="bold"
                           fontSize={{ base: "sm", md: "md" }}
-                          color={textColor}
+                          color={{ base: "gray.800", _dark: "white" }}
                         >
                           Editoři příspěvku:
                         </Text>
-                        <VStack spacing={2} align="stretch">
+                        <VStack gap={2} align="stretch">
                           {postData.post.editors.map((editor) => (
                             <VStack
                               key={editor.userId}
-                              spacing={2}
+                              gap={2}
                               align="stretch"
                               display={{ base: "flex", md: "none" }}
                             >
-                              <VStack align="start" spacing={1}>
+                              <VStack align="start" gap={1}>
                                 <Text
                                   fontWeight="medium"
                                   fontSize="sm"
@@ -563,7 +544,7 @@ const PostDetailPage: React.FC = () => {
                                 </Text>
                               </VStack>
                               <Badge
-                                colorScheme="green"
+                                colorPalette="green"
                                 variant="outline"
                                 size="sm"
                                 alignSelf="flex-start"
@@ -576,16 +557,16 @@ const PostDetailPage: React.FC = () => {
                           {postData.post.editors.map((editor) => (
                             <HStack
                               key={`desktop-${editor.userId}`}
-                              spacing={3}
+                              gap={3}
                               display={{ base: "none", md: "flex" }}
                               flexWrap="wrap"
                             >
-                              <VStack align="start" spacing={1}>
+                              <VStack align="start" gap={1}>
                                 <Text fontWeight="medium" fontSize="sm">
                                   @{editor.username}
                                 </Text>
                               </VStack>
-                              <Badge colorScheme="green" variant="outline" size="sm">
+                              <Badge colorPalette="green" variant="outline" size="sm">
                                 ID: {editor.userId}
                               </Badge>
                             </HStack>
@@ -596,8 +577,8 @@ const PostDetailPage: React.FC = () => {
                   )}
                 </VStack>
               </VStack>
-            </CardHeader>
-          </Card>
+            </Box>
+          </Box>
 
           {/* Obsah příspěvků */}
           {postData.post && (
@@ -645,21 +626,25 @@ const PostDetailPage: React.FC = () => {
 
           {/* Pokud nemá příspěvek žádný obsah */}
           {postData.post && postData.post.contents && postData.post.contents.length === 0 && postData.post.attachments && postData.post.attachments.length === 0 && (
-            <Alert status="info" w="100%">
-              <AlertIcon />
-              <Text wordBreak="break-word" fontSize={{ base: "sm", md: "md" }}>
-                Tento příspěvek zatím neobsahuje žádný text ani přílohy.
+            <Box
+              p={3}
+              bg={{ base: "blue.50", _dark: "blue.900" }}
+              borderRadius="md"
+              borderWidth="1px"
+              borderColor={{ base: "blue.200", _dark: "blue.700" }}
+              w="100%"
+            >
+              <Text fontSize="sm" color={{ base: "blue.800", _dark: "blue.200" }}>
+                ℹ️ Tento příspěvek zatím neobsahuje žádný text ani přílohy.
               </Text>
-            </Alert>
+            </Box>
           )}
 
           {/* Modal pro potvrzení smazání příspěvku */}
           <DeletePostModal
-            isOpen={isDeleteModalOpen}
+            open={isDeleteModalOpen}
             onClose={() => setDeleteModalOpen(false)}
             onConfirm={handleDeletePost}
-            postId={id ? parseInt(id) : 0}
-            isDeleting={false}
           />
         </VStack>
       </Box>

@@ -1,19 +1,15 @@
 import React from 'react';
 import {
   Box,
-  Card,
-  CardHeader,
-  CardBody,
   Heading,
   VStack,
   HStack,
   Text,
-  Badge,
-  useColorModeValue,
+  Badge
 } from '@chakra-ui/react';
 import {
   NetworkInfo,
-  PostDetailedListItem,
+  PostDetailedListItem
 } from '@/types';
 
 interface PostContentsProps {
@@ -22,9 +18,6 @@ interface PostContentsProps {
 }
 
 const PostContents: React.FC<PostContentsProps> = ({ post, networks }) => {
-  const cardBg = useColorModeValue('white', 'gray.700');
-  const borderColor = useColorModeValue('gray.200', 'gray.600');
-  const textColor = useColorModeValue('gray.600', 'gray.300');
 
   // Pomocná funkce pro získání názvu sítě podle ID
   const getNetworkName = (networkId: number): React.ReactElement => {
@@ -71,26 +64,32 @@ const PostContents: React.FC<PostContentsProps> = ({ post, networks }) => {
   }
 
   return (
-    <Card bg={cardBg} borderColor={borderColor} width="100%">
-      <CardHeader>
+    <Box
+      bg={{ base: "white", _dark: "gray.800" }}
+      borderWidth="1px"
+      borderColor={{ base: "gray.200", _dark: "gray.600" }}
+      borderRadius="md"
+      width="100%"
+    >
+      <Box p={4} borderBottom="1px" borderColor={{ base: "gray.200", _dark: "gray.600" }}>
         <Heading size="md">Texty příspěvků</Heading>
-      </CardHeader>
-      <CardBody>
-        <VStack spacing={4} align="stretch">
+      </Box>
+      <Box p={4}>
+        <VStack gap={4} align="stretch">
           {post.contents.map((content, index) => {
             const scheduledTimes = getScheduledTimesForContent(content.id);
             return (
-              <Box key={content.id} p={4} borderWidth="1px" borderRadius="md">
-                <VStack align="stretch" spacing={3}>
+              <Box key={content.id} p={4} borderWidth="1px" borderRadius="md" borderColor={{ base: "gray.200", _dark: "gray.600" }}>
+                <VStack align="stretch" gap={3}>
                   <HStack justifyContent="space-between">
-                    <Text fontWeight="bold" fontSize="sm" color={textColor}>
+                    <Text fontWeight="bold" fontSize="sm" color={{ base: "gray.800", _dark: "white" }}>
                       Text #{index + 1}
                     </Text>
                     {content.linkedNetworks.length > 0 && (
-                      <HStack spacing={2}>
-                        <Text fontSize="xs" color={textColor}>Sociální sítě:</Text>
+                      <HStack gap={2}>
+                        <Text fontSize="xs" color={{ base: "gray.800", _dark: "white" }}>Sociální sítě:</Text>
                         {content.linkedNetworks.map(networkId => (
-                          <Badge key={networkId} colorScheme="blue" size="sm">
+                          <Badge key={networkId} colorPalette="blue" size="sm">
                             {getNetworkName(networkId)}
                           </Badge>
                         ))}
@@ -99,7 +98,7 @@ const PostContents: React.FC<PostContentsProps> = ({ post, networks }) => {
                   </HStack>
                   <Text
                     p={3}
-                    bg={useColorModeValue('gray.50', 'gray.600')}
+                    bg={{ base: "gray.50", _dark: "gray.600" }}
                     borderRadius="md"
                     whiteSpace="pre-wrap"
                   >
@@ -108,20 +107,20 @@ const PostContents: React.FC<PostContentsProps> = ({ post, networks }) => {
 
                   {/* Informace o naplánovaných časech */}
                   {scheduledTimes.length > 0 && (
-                    <VStack align="stretch" spacing={2} mt={2}>
-                      <Text fontSize="xs" fontWeight="bold" color={textColor}>
+                    <VStack align="stretch" gap={2} mt={2}>
+                      <Text fontSize="xs" fontWeight="bold" color={{ base: "gray.800", _dark: "white" }}>
                         Plánování publikování:
                       </Text>
                       {scheduledTimes.map((scheduled, idx) => (
-                        <Box key={idx} p={2} bg={useColorModeValue('blue.50', 'blue.900')} borderRadius="sm">
-                          <VStack align="stretch" spacing={1}>
+                        <Box key={idx} p={2} bg={{ base: "blue.50", _dark: "blue.900" }} borderRadius="sm">
+                          <VStack align="stretch" gap={1}>
                             <HStack justify="space-between">
-                              <Badge colorScheme="blue" size="sm">
+                              <Badge colorPalette="blue" size="sm">
                                 {getNetworkName(scheduled.networkId)}
                               </Badge>
-                              <HStack spacing={2}>
+                              <HStack gap={2}>
                                 {scheduled.networkPostId && (
-                                  <Text fontSize="xs" color={textColor}>
+                                  <Text fontSize="xs" color={{ base: "gray.800", _dark: "white" }}>
                                     ID: {scheduled.networkPostId}
                                   </Text>
                                 )}
@@ -130,7 +129,7 @@ const PostContents: React.FC<PostContentsProps> = ({ post, networks }) => {
                             {scheduled.postDate && (() => {
                               const postDate = new Date(scheduled.postDate);
                               return !isNaN(postDate.getTime()) && (
-                                <Text fontSize="xs" color={textColor}>
+                                <Text fontSize="xs" color={{ base: "gray.800", _dark: "white" }}>
                                   Naplánováno: {postDate.toLocaleString('cs-CZ')}
                                 </Text>
                               );
@@ -149,7 +148,7 @@ const PostContents: React.FC<PostContentsProps> = ({ post, networks }) => {
                     </VStack>
                   )}
 
-                  <Text fontSize="xs" color={textColor}>
+                  <Text fontSize="xs" color={{ base: "gray.800", _dark: "white" }}>
                     Počet znaků: {content.content.length}
                   </Text>
                 </VStack>
@@ -157,8 +156,8 @@ const PostContents: React.FC<PostContentsProps> = ({ post, networks }) => {
             );
           })}
         </VStack>
-      </CardBody>
-    </Card>
+      </Box>
+    </Box>
   );
 };
 

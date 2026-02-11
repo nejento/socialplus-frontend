@@ -4,7 +4,7 @@ import { User } from '@/types';
 
 interface AuthContextType {
   user: User | null;
-  isLoading: boolean;
+  loading: boolean;
   login: (username: string, password: string) => Promise<void>;
   register: (username: string, displayname: string, password: string) => Promise<void>;
   logout: () => Promise<void>;
@@ -18,7 +18,7 @@ interface AuthProviderProps {
 
 export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
+  const [loading, setIsLoading] = useState(true);
 
   // Při načtení aplikace zkontrolujeme, zda je uživatel přihlášený
   useEffect(() => {
@@ -95,11 +95,10 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
   const contextValue: AuthContextType = {
     user,
-    isLoading,
+    loading,
     login,
     register,
-    logout,
-  };
+    logout };
 
   return (
     <AuthContext.Provider value={contextValue}>

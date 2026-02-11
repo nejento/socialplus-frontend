@@ -1,30 +1,27 @@
-import React, { useState, useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
-  Modal,
-  ModalOverlay,
-  ModalContent,
-  ModalHeader,
-  ModalBody,
-  ModalCloseButton,
-  ModalFooter,
-  VStack,
-  FormControl,
-  FormLabel,
-  Input,
-  Select,
+  DialogRoot,
+  DialogBackdrop,
+  DialogContent,
+  DialogPositioner,
+  DialogHeader,
+  DialogBody,
+  DialogFooter,
+  DialogCloseTrigger,
   Button,
-  FormErrorMessage,
-  InputGroup,
-  InputRightElement,
-  Spinner,
+  Field,
+  VStack,
+  Input,
+  Box,
   Text,
-  Alert,
-  AlertIcon,
-  HStack,
-  useColorModeValue,
+  SelectRoot,
+  SelectTrigger,
+  SelectValueText,
+  SelectContent,
+  SelectItem,
+  createListCollection
 } from '@chakra-ui/react';
-import { CheckIcon, CloseIcon } from '@chakra-ui/icons';
-import { useForm } from 'react-hook-form';
+import { useForm, Controller } from 'react-hook-form';
 import { userAPI } from '../services/api';
 
 interface UserPermissionForm {
@@ -33,10 +30,10 @@ interface UserPermissionForm {
 }
 
 interface UserPermissionModalProps {
-  isOpen: boolean;
+  open: boolean;
   onClose: () => void;
   onSubmit: (data: UserPermissionForm) => Promise<void>;
-  isLoading?: boolean;
+  loading?: boolean;
   editingPermission?: {
     user?: {
       username: string;
@@ -45,18 +42,13 @@ interface UserPermissionModalProps {
   } | null;
 }
 
-const UserPermissionModal: React.FC<UserPermissionModalProps> = ({
-  isOpen,
+export const UserPermissionModal: React.FC<UserPermissionModalProps> = ({
+  open,
   onClose,
   onSubmit,
-  isLoading = false,
-  editingPermission = null,
+  loading= false,
+  editingPermission = null
 }) => {
-  // Color mode values pro správné stylování
-  const inputBg = useColorModeValue('white', 'gray.700');
-  const readOnlyBg = useColorModeValue('gray.50', 'gray.600');
-  const textColor = useColorModeValue('gray.500', 'gray.400');
-
   const [usernameValidation, setUsernameValidation] = useState<{
     isValidating: boolean;
     isValid: boolean | null;
@@ -73,6 +65,7 @@ const UserPermissionModal: React.FC<UserPermissionModalProps> = ({
     setValue,
     watch,
     reset,
+    control,
     formState: { errors }
   } = useForm<UserPermissionForm>({
     defaultValues: {
@@ -164,122 +157,147 @@ const UserPermissionModal: React.FC<UserPermissionModalProps> = ({
     }
   };
 
-  const getUsernameValidationIcon = () => {
+  const getValidationMessage = () => {
     if (usernameValidation.isValidating) {
-      return <Spinner size="sm" />;
+      return 'Ověřování uživatelského jména...';
     }
     if (usernameValidation.isValid === true) {
-      return <CheckIcon color="green.500" />;
+      return 'Uživatel nalezen';
     }
     if (usernameValidation.isValid === false) {
-      return <CloseIcon color="red.500" />;
+      return 'Uživatel nenalezen';
     }
-    return null;
+    return '';
   };
 
+  const validationMessage = getValidationMessage();
+
   return (
-    <Modal isOpen={isOpen} onClose={handleClose} size="md">
-      <ModalOverlay />
-      <ModalContent>
-        <ModalHeader>
-          {editingPermission ? 'Upravit oprávnění' : 'Přidat uživatele'}
-        </ModalHeader>
-        <ModalCloseButton />
+    <DialogRoot open={open} onOpenChange={({ open }) => !open && handleClose()} size="lg">
+      <DialogBackdrop />
+      <DialogPositioner>
+        <DialogContent>
+          <DialogHeader>
+            {editingPermission ? 'Upravit oprávnění' : 'Přidat uživatelské oprávnění'}
+          </DialogHeader>
+          <DialogCloseTrigger />
 
-        <form onSubmit={handleSubmit(handleFormSubmit)}>
-          <ModalBody>
-            <VStack spacing={4} align="stretch">
-              <Alert status="info" borderRadius="md">
-                <AlertIcon />
-                <VStack align="start" spacing={1} flex={1}>
-                  <Text fontSize="sm" fontWeight="medium">
-                    Uživatelská oprávnění
-                  </Text>
-                  <Text fontSize="sm">
-                    Přidejte nebo upravte oprávnění pro přístup k této sociální síti.
-                  </Text>
-                </VStack>
-              </Alert>
-
-              <FormControl isRequired isInvalid={!!errors.username}>
-                <FormLabel>Uživatelské jméno</FormLabel>
-                <InputGroup>
-                  <Input
-                    {...register('username', {
-                      required: 'Zadejte prosím uživatelské jméno',
-                      minLength: {
-                        value: 2,
-                        message: 'Uživatelské jméno musí mít alespoň 2 znaky'
-                      }
-                    })}
-                    placeholder="Např. jannovak"
-                    isReadOnly={!!editingPermission}
-                    bg={editingPermission ? readOnlyBg : inputBg}
-                  />
-                  <InputRightElement>
-                    {getUsernameValidationIcon()}
-                  </InputRightElement>
-                </InputGroup>
-                <FormErrorMessage>
-                  {errors.username?.message}
-                </FormErrorMessage>
-                {usernameValidation.isValid === false && usernameValidation.validatedUsername === watchedUsername && (
-                  <Text fontSize="sm" color="red.500" mt={1}>
-                    Uživatel s tímto jménem neexistuje
-                  </Text>
-                )}
-              </FormControl>
-
-              <FormControl isRequired>
-                <FormLabel>Úroveň oprávnění</FormLabel>
-                <Select
-                  {...register('permission', {
-                    required: 'Vyberte prosím úroveň oprávnění',
-                  })}
-                  bg={inputBg}
-                  color={useColorModeValue('black', 'white')}
-                  _focus={{
-                    borderColor: useColorModeValue('blue.500', 'blue.300'),
-                    boxShadow: useColorModeValue('0 0 0 1px blue.500', '0 0 0 1px blue.300'),
-                  }}
+          <form onSubmit={handleSubmit(handleFormSubmit)}>
+            <DialogBody>
+              <VStack gap={4} align="stretch">
+                {/* Info Alert */}
+                <Box
+                  p={3}
+                  bg={{ base: "blue.50", _dark: "blue.900" }}
+                  borderRadius="md"
+                  borderWidth="1px"
+                  borderColor={{ base: "blue.200", _dark: "blue.700" }}
                 >
-                  <option value="read" style={{ backgroundColor: useColorModeValue('#ffffff', '#2D3748'), color: useColorModeValue('#000000', '#ffffff') }}>
-                    Pouze čtení
-                  </option>
-                  <option value="write" style={{ backgroundColor: useColorModeValue('#ffffff', '#2D3748'), color: useColorModeValue('#000000', '#ffffff') }}>
-                    Úplný přístup
-                  </option>
-                </Select>
-                <Text fontSize="sm" color={textColor} mt={2}>
-                  <strong>Pouze čtení:</strong> Může zobrazovat obsah sociální sítě<br />
-                  <strong>Úplný přístup:</strong> Může upravovat a publikovat obsah
-                </Text>
-              </FormControl>
-            </VStack>
-          </ModalBody>
+                  <Text fontSize="sm">
+                    {editingPermission
+                      ? 'Upravte oprávnění pro uživatele.'
+                      : 'Přidejte uživatele a nastavte jeho oprávnění pro správu tohoto příspěvku.'}
+                  </Text>
+                </Box>
 
-          <ModalFooter>
-            <HStack spacing={3}>
-              <Button variant="ghost" onClick={handleClose} isDisabled={isLoading}>
+                {/* Username Field */}
+                <Field.Root required invalid={!!errors.username}>
+                  <Field.Label>Uživatelské jméno</Field.Label>
+                  <Box position="relative">
+                    <Input
+                      {...register('username', {
+                        required: 'Uživatelské jméno je povinné'
+                      })}
+                      placeholder="Např. jan.novak"
+                      readOnly={!!editingPermission}
+                      bg={editingPermission ? { base: "gray.100", _dark: "gray.700" } : undefined}
+                      pr="12"
+                    />
+                    {usernameValidation.isValidating && (
+                      <Box position="absolute" right={2} top="50%" transform="translateY(-50%)">
+                        <Text fontSize="sm">...</Text>
+                      </Box>
+                    )}
+                    {usernameValidation.isValid === true && (
+                      <Box position="absolute" right={2} top="50%" transform="translateY(-50%)">
+                        <Text color="green.500">✓</Text>
+                      </Box>
+                    )}
+                    {usernameValidation.isValid === false && (
+                      <Box position="absolute" right={2} top="50%" transform="translateY(-50%)">
+                        <Text color="red.500">✗</Text>
+                      </Box>
+                    )}
+                  </Box>
+                  <Field.ErrorText>
+                    {errors.username?.message as string}
+                  </Field.ErrorText>
+                  {validationMessage && (
+                    <Text
+                      fontSize="sm"
+                      color={usernameValidation.isValid ? "green.500" : "red.500"}
+                      mt={1}
+                    >
+                      {validationMessage}
+                    </Text>
+                  )}
+                </Field.Root>
+
+                {/* Permission Level Field */}
+                <Field.Root required>
+                  <Field.Label>Úroveň oprávnění</Field.Label>
+                  <Controller
+                    control={control}
+                    name="permission"
+                    render={({ field }) => (
+                      <SelectRoot
+                        collection={createListCollection({
+                          items: [
+                            { label: "Zobrazení - Může pouze zobrazit příspěvek", value: "read" },
+                            { label: "Úprava - Může zobrazit a upravovat příspěvek", value: "write" }
+                          ]
+                        })}
+                        value={field.value ? [field.value] : []}
+                        onValueChange={({ value }) => field.onChange(value[0])}
+                      >
+                        <SelectTrigger>
+                          <SelectValueText placeholder="Vyberte úroveň oprávnění" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem item={{ label: "Zobrazení - Může pouze zobrazit příspěvek", value: "read" }} key="read">
+                            Zobrazení - Může pouze zobrazit příspěvek
+                          </SelectItem>
+                          <SelectItem item={{ label: "Úprava - Může zobrazit a upravovat příspěvek", value: "write" }} key="write">
+                            Úprava - Může zobrazit a upravovat příspěvek
+                          </SelectItem>
+                        </SelectContent>
+                      </SelectRoot>
+                    )}
+                  />
+                  <Text fontSize="xs" color={{ base: "gray.600", _dark: "gray.400" }} mt={1}>
+                    Vyberte, jaká oprávnění bude mít uživatel nad tímto příspěvkem.
+                  </Text>
+                </Field.Root>
+              </VStack>
+            </DialogBody>
+
+            <DialogFooter gap={3}>
+              <Button variant="ghost" onClick={handleClose}>
                 Zrušit
               </Button>
               <Button
-                colorScheme="blue"
                 type="submit"
-                isLoading={isLoading}
-                loadingText={editingPermission ? "Aktualizuji..." : "Přidávám..."}
-                isDisabled={
-                  !editingPermission &&
-                  (usernameValidation.isValid !== true || usernameValidation.validatedUsername !== watchedUsername)
-                }
+                colorPalette="blue"
+                loading={loading}
+                disabled={!usernameValidation.isValid || usernameValidation.isValidating}
               >
-                {editingPermission ? 'Aktualizovat oprávnění' : 'Přidat uživatele'}
+                {editingPermission ? 'Uložit změny' : 'Přidat oprávnění'}
               </Button>
-            </HStack>
-          </ModalFooter>
-        </form>
-      </ModalContent>
-    </Modal>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </DialogPositioner>
+    </DialogRoot>
   );
 };
 

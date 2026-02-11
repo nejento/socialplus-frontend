@@ -1,6 +1,6 @@
-import { useCallback, useEffect, useState } from 'react';
-import { useToast } from '@chakra-ui/react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { postsAPI, userAPI } from '../services/api';
+import { toaster } from '../components/ui/toaster';
 import {
   PostDetailedListItem,
   PostEditor,
@@ -59,7 +59,6 @@ export interface UsePostDataReturn {
 }
 
 export const usePostData = (currentPostId: number | null, id?: string): UsePostDataReturn => {
-  const toast = useToast();
 
   // State
   const [postEditors, setPostEditors] = useState<PostEditor[]>([]);
@@ -221,10 +220,10 @@ export const usePostData = (currentPostId: number | null, id?: string): UsePostD
     } catch (error) {
       console.error('Chyba při načítání dat příspěvku:', error);
       if (id) {
-        toast({
+        toaster.create({
           title: 'Chyba při načítání',
           description: 'Nepodařilo se načíst informace o příspěvku',
-          status: 'error',
+          type: 'error',
           duration: 3000,
         });
       }
@@ -232,7 +231,7 @@ export const usePostData = (currentPostId: number | null, id?: string): UsePostD
       setIsLoading(false);
       setLoadingNetworks(false);
     }
-  }, [currentPostId, currentUserId, id, toast]);
+  }, [currentPostId, currentUserId, id]);
 
   // Načtení dat při změně závislostí - pouze jednou
   useEffect(() => {

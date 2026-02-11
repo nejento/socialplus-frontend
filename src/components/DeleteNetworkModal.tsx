@@ -1,21 +1,20 @@
 import React, { useState } from 'react';
 import {
-  Modal,
-  ModalOverlay,
-  ModalContent,
-  ModalHeader,
-  ModalFooter,
-  ModalBody,
-  ModalCloseButton,
+  DialogRoot,
+  DialogBackdrop,
+  DialogContent,
+  DialogPositioner,
+  DialogHeader,
+  DialogFooter,
+  DialogBody,
+  DialogCloseTrigger,
   Button,
   Text,
-  VStack,
-  Alert,
-  AlertIcon
+  VStack
 } from '@chakra-ui/react';
 
 interface DeleteNetworkModalProps {
-  isOpen: boolean;
+  open: boolean;
   onClose: () => void;
   onConfirm: () => Promise<void>;
   networkName: string;
@@ -23,10 +22,11 @@ interface DeleteNetworkModalProps {
 }
 
 const DeleteNetworkModal: React.FC<DeleteNetworkModalProps> = ({
-  isOpen,
+  open,
   onClose,
   onConfirm,
-  networkName
+  networkName,
+  isDeleting = false
 }) => {
   const [isConfirming, setIsConfirming] = useState(false);
 
@@ -40,58 +40,49 @@ const DeleteNetworkModal: React.FC<DeleteNetworkModalProps> = ({
   };
 
   return (
-    <Modal isOpen={isOpen} onClose={onClose} isCentered>
-      <ModalOverlay />
-      <ModalContent>
-        <ModalHeader>Odstranit sociální síť</ModalHeader>
-        <ModalCloseButton />
-        <ModalBody>
-          <VStack spacing={4} align="stretch">
-            <Text>
-              Opravdu chcete odstranit sociální síť <strong>"{networkName}"</strong>?
+    <DialogRoot open={open} onOpenChange={({ open }) => !open && onClose()}>
+      <DialogBackdrop />
+      <DialogPositioner>
+        <DialogContent>
+          <DialogHeader>
+            <Text fontSize="lg" fontWeight="bold" color="red.500">
+              Smazat síť
             </Text>
+          </DialogHeader>
 
-            <Alert status="warning" borderRadius="md">
-              <AlertIcon />
-              <VStack align="start" spacing={2} flex={1}>
-                <Text fontWeight="medium" fontSize="sm">
-                  Důležité upozornění:
-                </Text>
-                <Text fontSize="sm">
-                  Sociální síť je možné odstranit jen tehdy, pokud neexistuje příspěvek s obsahem připojeným na danou síť.
-                </Text>
-              </VStack>
-            </Alert>
+          <DialogCloseTrigger />
 
-            <Alert status="error" borderRadius="md">
-              <AlertIcon />
-              <Text fontSize="sm" fontWeight="medium">
-                Tato akce je nevratná.
+          <DialogBody>
+            <VStack gap={4} align="stretch">
+              <Text>
+                Opravdu chcete smazat síť <strong>{networkName}</strong>?
               </Text>
-            </Alert>
-          </VStack>
-        </ModalBody>
 
-        <ModalFooter>
-          <Button
-            variant="ghost"
-            mr={3}
-            onClick={onClose}
-            isDisabled={isConfirming}
-          >
-            Zrušit
-          </Button>
-          <Button
-            colorScheme="red"
-            onClick={handleConfirm}
-            isLoading={isConfirming}
-            loadingText="Odstraňujem..."
-          >
-            Odstranit síť
-          </Button>
-        </ModalFooter>
-      </ModalContent>
-    </Modal>
+              <Text fontSize="sm" color={{ base: "red.600", _dark: "red.400" }}>
+                ⚠️ Tato akce je nevratná. Všechny tokeny a oprávnění pro tuto síť budou také smazány.
+              </Text>
+            </VStack>
+          </DialogBody>
+
+          <DialogFooter gap={3}>
+            <Button
+              variant="outline"
+              onClick={onClose}
+              disabled={isConfirming || isDeleting}
+            >
+              Zrušit
+            </Button>
+            <Button
+              colorPalette="red"
+              onClick={handleConfirm}
+              loading={isConfirming || isDeleting}
+            >
+              Smazat síť
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </DialogPositioner>
+    </DialogRoot>
   );
 };
 

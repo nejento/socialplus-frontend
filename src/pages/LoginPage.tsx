@@ -2,22 +2,20 @@ import { useState, useEffect } from 'react';
 import {
   Box,
   Button,
-  FormControl,
-  FormLabel,
   Input,
   VStack,
   Container,
   Heading,
-  useToast,
-  useColorModeValue,
   Text,
   Link,
-  FormErrorMessage,
   Image,
+  Field
 } from '@chakra-ui/react';
 import { useForm } from 'react-hook-form';
 import { useAuth } from '../contexts/AuthContext';
 import { useNavigate, useLocation } from 'react-router';
+import { toaster } from '../components/ui/toaster';
+import { useColorMode } from '../components/ui/color-mode';
 
 interface LoginForm {
   username: string;
@@ -35,12 +33,10 @@ const LoginPage = () => {
   const { login, register: registerUser } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
-  const toast = useToast();
   const [isRegisterMode, setIsRegisterMode] = useState(false);
+  const { resolvedColorMode } = useColorMode();
 
-  const bgColor = useColorModeValue('white', 'gray.800');
-  const borderColor = useColorModeValue('gray.200', 'gray.700');
-  const logoSrc = useColorModeValue('/LogoLight.svg', '/LogoDark.svg');
+  const logoSrc = resolvedColorMode === 'dark' ? "/LogoDark.svg" : "/LogoLight.svg";
 
   // Login form
   const loginForm = useForm<LoginForm>();
@@ -55,46 +51,37 @@ const LoginPage = () => {
       await login(data.username, data.password);
       navigate('/');
     } catch (error) {
-      toast({
-        title: 'Chyba přihlášení',
+      toaster.create({
+        title: 'Chyba při přihlášení',
         description: 'Neplatné přihlašovací údaje',
-        status: 'error',
-        duration: 3000,
-        isClosable: true,
+        type: 'error'
       });
     }
   };
 
   const onRegisterSubmit = async (data: RegisterForm) => {
     if (data.password !== data.confirmPassword) {
-      toast({
-        title: 'Chyba registrace',
-        description: 'Hesla se neshodují',
-        status: 'error',
-        duration: 3000,
-        isClosable: true,
+      toaster.create({
+        title: 'Hesla se neshodují',
+        description: 'Zadaná hesla nejsou stejná',
+        type: 'error'
       });
       return;
     }
 
     try {
       await registerUser(data.username, data.displayname, data.password);
-      // Po úspěšné registraci přesměrujeme na /login
       navigate('/login');
-      toast({
+      toaster.create({
         title: 'Registrace úspěšná',
-        description: 'Váš účet byl vytvořen. Nyní se prosím přihlaste.',
-        status: 'success',
-        duration: 5000,
-        isClosable: true,
+        description: 'Nyní se můžete přihlásit',
+        type: 'success'
       });
     } catch (error: any) {
-      toast({
-        title: 'Chyba registrace',
-        description: error?.response?.data?.message || 'Registrace se nezdařila',
-        status: 'error',
-        duration: 3000,
-        isClosable: true,
+      toaster.create({
+        title: 'Chyba při registraci',
+        description: error.message || 'Nepodařilo se zaregistrovat',
+        type: 'error'
       });
     }
   };
@@ -131,7 +118,7 @@ const LoginPage = () => {
   return (
     <Box
       minH="100vh"
-      bg={useColorModeValue('gray.50', 'gray.900')}
+      bg={{ base: "gray.50", _dark: "gray.900" }}
       w="100%"
       maxW="100vw"
       overflow="hidden"
@@ -153,13 +140,13 @@ const LoginPage = () => {
             w="full"
             py={{ base: '6', sm: '8' }}
             px={{ base: '6', sm: '10' }}
-            bg={bgColor}
+            bg={{ base: "white", _dark: "gray.800" }}
             boxShadow={{ base: 'none', sm: 'md' }}
             borderRadius={{ base: 'xl', sm: 'xl' }}
             borderWidth="1px"
-            borderColor={borderColor}
+            borderColor={{ base: "gray.200", _dark: "gray.600" }}
           >
-            <VStack spacing={{ base: '4', md: '6' }}>
+            <VStack gap={{ base: '4', md: '6' }}>
               <Box mb={2}>
                 <Image
                   src={logoSrc}
@@ -176,27 +163,27 @@ const LoginPage = () => {
               {!isRegisterMode ? (
                 // Login Form
                 <form onSubmit={loginForm.handleSubmit(onLoginSubmit)} style={{ width: '100%' }}>
-                  <VStack spacing={{ base: '4', md: '5' }}>
-                    <FormControl isRequired>
-                      <FormLabel fontSize={{ base: 'sm', md: 'md' }}>Username</FormLabel>
+                  <VStack gap={{ base: '4', md: '5' }}>
+                    <Field.Root required>
+                      <Field.Label fontSize={{ base: 'sm', md: 'md' }}>Username</Field.Label>
                       <Input
                         {...loginForm.register('username')}
                         size={{ base: 'sm', md: 'md' }}
                       />
-                    </FormControl>
-                    <FormControl isRequired>
-                      <FormLabel fontSize={{ base: 'sm', md: 'md' }}>Heslo</FormLabel>
+                    </Field.Root>
+                    <Field.Root required>
+                      <Field.Label fontSize={{ base: 'sm', md: 'md' }}>Heslo</Field.Label>
                       <Input
                         type="password"
                         {...loginForm.register('password')}
                         size={{ base: 'sm', md: 'md' }}
                       />
-                    </FormControl>
+                    </Field.Root>
                     <Button
                       type="submit"
-                      colorScheme="blue"
+                      colorPalette="blue"
                       width="full"
-                      isLoading={loginForm.formState.isSubmitting}
+                      loading={loginForm.formState.isSubmitting}
                       size={{ base: 'sm', md: 'md' }}
                       fontSize={{ base: 'sm', md: 'md' }}
                     >
@@ -207,12 +194,12 @@ const LoginPage = () => {
               ) : (
                 // Register Form
                 <form onSubmit={registerForm.handleSubmit(onRegisterSubmit)} style={{ width: '100%' }}>
-                  <VStack spacing={{ base: '4', md: '5' }}>
-                    <FormControl
-                      isRequired
-                      isInvalid={!!registerForm.formState.errors.username}
+                  <VStack gap={{ base: '4', md: '5' }}>
+                    <Field.Root
+                      required
+                      invalid={!!registerForm.formState.errors.username}
                     >
-                      <FormLabel fontSize={{ base: 'sm', md: 'md' }}>Username</FormLabel>
+                      <Field.Label fontSize={{ base: 'sm', md: 'md' }}>Username</Field.Label>
                       <Input
                         {...registerForm.register('username', {
                           validate: validateUsername
@@ -220,13 +207,13 @@ const LoginPage = () => {
                         size={{ base: 'sm', md: 'md' }}
                         placeholder="pouze písmena, číslice a _"
                       />
-                      <FormErrorMessage>
+                      <Field.ErrorText>
                         {registerForm.formState.errors.username?.message}
-                      </FormErrorMessage>
-                    </FormControl>
+                      </Field.ErrorText>
+                    </Field.Root>
 
-                    <FormControl isRequired>
-                      <FormLabel fontSize={{ base: 'sm', md: 'md' }}>Zobrazované jméno</FormLabel>
+                    <Field.Root required invalid={!!registerForm.formState.errors.displayname}>
+                      <Field.Label fontSize={{ base: 'sm', md: 'md' }}>Zobrazované jméno</Field.Label>
                       <Input
                         {...registerForm.register('displayname', {
                           required: 'Zobrazované jméno je povinné',
@@ -238,16 +225,16 @@ const LoginPage = () => {
                         size={{ base: 'sm', md: 'md' }}
                         placeholder="Vaše celé jméno"
                       />
-                      <FormErrorMessage>
+                      <Field.ErrorText>
                         {registerForm.formState.errors.displayname?.message}
-                      </FormErrorMessage>
-                    </FormControl>
+                      </Field.ErrorText>
+                    </Field.Root>
 
-                    <FormControl
-                      isRequired
-                      isInvalid={!!registerForm.formState.errors.password}
+                    <Field.Root
+                      required
+                      invalid={!!registerForm.formState.errors.password}
                     >
-                      <FormLabel fontSize={{ base: 'sm', md: 'md' }}>Heslo</FormLabel>
+                      <Field.Label fontSize={{ base: 'sm', md: 'md' }}>Heslo</Field.Label>
                       <Input
                         type="password"
                         {...registerForm.register('password', {
@@ -259,16 +246,16 @@ const LoginPage = () => {
                         })}
                         size={{ base: 'sm', md: 'md' }}
                       />
-                      <FormErrorMessage>
+                      <Field.ErrorText>
                         {registerForm.formState.errors.password?.message}
-                      </FormErrorMessage>
-                    </FormControl>
+                      </Field.ErrorText>
+                    </Field.Root>
 
-                    <FormControl
-                      isRequired
-                      isInvalid={!!registerForm.formState.errors.confirmPassword}
+                    <Field.Root
+                      required
+                      invalid={!!registerForm.formState.errors.confirmPassword}
                     >
-                      <FormLabel fontSize={{ base: 'sm', md: 'md' }}>Potvrdit heslo</FormLabel>
+                      <Field.Label fontSize={{ base: 'sm', md: 'md' }}>Potvrdit heslo</Field.Label>
                       <Input
                         type="password"
                         {...registerForm.register('confirmPassword', {
@@ -276,16 +263,16 @@ const LoginPage = () => {
                         })}
                         size={{ base: 'sm', md: 'md' }}
                       />
-                      <FormErrorMessage>
+                      <Field.ErrorText>
                         {registerForm.formState.errors.confirmPassword?.message}
-                      </FormErrorMessage>
-                    </FormControl>
+                      </Field.ErrorText>
+                    </Field.Root>
 
                     <Button
                       type="submit"
-                      colorScheme="green"
+                      colorPalette="green"
                       width="full"
-                      isLoading={registerForm.formState.isSubmitting}
+                      loading={registerForm.formState.isSubmitting}
                       size={{ base: 'sm', md: 'md' }}
                       fontSize={{ base: 'sm', md: 'md' }}
                     >

@@ -6,22 +6,14 @@ import {
   Text,
   Button,
   SimpleGrid,
-  useColorModeValue,
   Spinner,
-  Alert,
-  AlertIcon,
-  AlertTitle,
-  AlertDescription,
   HStack,
-  useDisclosure,
-  Tabs,
-  TabList,
-  TabPanels,
-  Tab,
-  TabPanel,
+  TabsRoot,
+  TabsList,
+  TabsTrigger,
+  TabsContent
 } from '@chakra-ui/react';
 import { useNavigate } from 'react-router';
-import { AddIcon } from '@chakra-ui/icons';
 import { networkAPI } from '../services/api';
 import { OwnedNetwork, NetworkInfo } from '@/types';
 import CreateNetworkModal from '../components/CreateNetworkModal';
@@ -33,7 +25,10 @@ const NetworksPage = () => {
   const [allNetworks, setAllNetworks] = useState<NetworkInfo[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const { isOpen, onOpen, onClose } = useDisclosure();
+  const [isOpen, setIsOpen] = useState(false);
+
+  const onOpen = () => setIsOpen(true);
+  const onClose = () => setIsOpen(false);
 
   useEffect(() => {
     loadNetworks();
@@ -80,7 +75,7 @@ const NetworksPage = () => {
   if (loading) {
     return (
       <Box display="flex" justifyContent="center" alignItems="center" minH="400px">
-        <VStack spacing={4}>
+        <VStack gap={4}>
           <Spinner size="xl" color="blue.500" />
           <Text>Načítání sociálních sítí...</Text>
         </VStack>
@@ -90,13 +85,22 @@ const NetworksPage = () => {
 
   if (error) {
     return (
-      <Alert status="error" borderRadius="md">
-        <AlertIcon />
-        <Box>
-          <AlertTitle>Chyba při načítání!</AlertTitle>
-          <AlertDescription>{error}</AlertDescription>
-        </Box>
-      </Alert>
+      <Box
+        p={4}
+        bg={{ base: "red.50", _dark: "red.900" }}
+        borderRadius="md"
+        borderWidth="1px"
+        borderColor={{ base: "red.200", _dark: "red.700" }}
+      >
+        <VStack align="start" gap={2}>
+          <Text fontWeight="bold" color={{ base: "red.800", _dark: "red.200" }}>
+            Chyba při načítání!
+          </Text>
+          <Text fontSize="sm" color={{ base: "red.700", _dark: "red.300" }}>
+            {error}
+          </Text>
+        </VStack>
+      </Box>
     );
   }
 
@@ -105,12 +109,11 @@ const NetworksPage = () => {
     !ownedNetworks.some(ownedNetwork => ownedNetwork.networkId === network.networkId)
   );
 
-  const cardBg = useColorModeValue('white', 'gray.800');
 
   return (
     <Box
       minH="100vh"
-      bg={useColorModeValue('gray.50', 'gray.900')}
+      bg={{ base: "gray.50", _dark: "gray.900" }}
       w="100%"
       maxW="100vw"
       overflow="hidden"
@@ -120,12 +123,12 @@ const NetworksPage = () => {
         mx="auto"
         w="100%"
       >
-        <VStack spacing={6} align="stretch" w="100%" px={{ base: 0, md: 0 }}>
+        <VStack gap={6} align="stretch" w="100%" px={{ base: 0, md: 0 }}>
           {/* Header */}
-          <Box bg={cardBg} p={{ base: 4, md: 6 }} borderRadius="lg" shadow="sm" w="100%" overflow="hidden">
-            <VStack spacing={4} align="stretch" w="100%">
+          <Box bg={{ base: "white", _dark: "gray.800" }} p={{ base: 4, md: 6 }} borderRadius="lg" shadow="sm" w="100%" overflow="hidden">
+            <VStack gap={4} align="stretch" w="100%">
               <VStack
-                spacing={3}
+                gap={3}
                 align="stretch"
                 w="100%"
                 display={{ base: "flex", md: "none" }}
@@ -134,8 +137,7 @@ const NetworksPage = () => {
                   Správa sociálních sítí
                 </Heading>
                 <Button
-                  leftIcon={<AddIcon />}
-                  colorScheme="green"
+                  colorPalette="green"
                   onClick={handleCreateNetwork}
                   size="md"
                   w="100%"
@@ -156,8 +158,7 @@ const NetworksPage = () => {
                   Správa sociálních sítí
                 </Heading>
                 <Button
-                  leftIcon={<AddIcon />}
-                  colorScheme="green"
+                  colorPalette="green"
                   onClick={handleCreateNetwork}
                   size="lg"
                 >
@@ -168,150 +169,118 @@ const NetworksPage = () => {
           </Box>
 
           {/* Tabs */}
-          <Box bg={cardBg} borderRadius="lg" shadow="sm" w="100%" overflow="hidden">
-            <Tabs isFitted variant="enclosed" w="100%">
-              <TabList
+          <Box bg={{ base: "white", _dark: "gray.800" }} borderRadius="lg" shadow="sm" w="100%" overflow="hidden">
+            <TabsRoot defaultValue="owned">
+              <TabsList
                 overflowX="auto"
                 overflowY="hidden"
                 css={{
                   '&::-webkit-scrollbar': {
-                    height: '4px',
+                    height: '4px'
                   },
                   '&::-webkit-scrollbar-track': {
-                    background: useColorModeValue('#f1f1f1', '#2d3748'),
+                    background: { base: "#f1f1f1", _dark: "#2d3748" }
                   },
                   '&::-webkit-scrollbar-thumb': {
-                    background: useColorModeValue('#c1c1c1', '#4a5568'),
-                    borderRadius: '2px',
-                  },
+                    background: { base: "#c1c1c1", _dark: "#4a5568" },
+                    borderRadius: '2px'
+                  }
                 }}
               >
-                <Tab fontSize={{ base: "sm", md: "md" }} minW="fit-content" px={{ base: 2, md: 4 }}>
+                <TabsTrigger value="owned" fontSize={{ base: "sm", md: "md" }} minW="fit-content" px={{ base: 2, md: 4 }}>
                   Moje sítě ({ownedNetworks.length})
-                </Tab>
-                <Tab fontSize={{ base: "sm", md: "md" }} minW="fit-content" px={{ base: 2, md: 4 }}>
+                </TabsTrigger>
+                <TabsTrigger value="administered" fontSize={{ base: "sm", md: "md" }} minW="fit-content" px={{ base: 2, md: 4 }}>
                   Administrované sítě ({administeredNetworks.length})
-                </Tab>
-              </TabList>
-              <TabPanels w="100%">
-                {/* Tab 1: Moje sítě */}
-                <TabPanel p={{ base: 4, md: 6 }} w="100%">
-                  {ownedNetworks.length === 0 ? (
-                    <Box
-                      textAlign="center"
-                      py={{ base: 8, md: 12 }}
-                      borderWidth="1px"
-                      borderRadius="lg"
-                      borderStyle="dashed"
-                      borderColor={useColorModeValue('gray.300', 'gray.600')}
-                      w="100%"
-                    >
-                      <VStack spacing={4} px={{ base: 4, md: 0 }}>
-                        <Text
-                          fontSize={{ base: "md", md: "lg" }}
-                          fontWeight="medium"
-                          wordBreak="break-word"
-                        >
-                          Zatím nemáte žádné sociální sítě
-                        </Text>
-                        <Text
-                          color={useColorModeValue('gray.600', 'gray.400')}
-                          fontSize={{ base: "sm", md: "md" }}
-                          wordBreak="break-word"
-                        >
-                          Vytvořte svou první sociální síť
-                        </Text>
-                        <Button
-                          leftIcon={<AddIcon />}
-                          colorScheme="green"
-                          onClick={handleCreateNetwork}
-                          size={{ base: "md", md: "lg" }}
-                          w={{ base: "100%", md: "auto" }}
-                          maxW={{ base: "300px", md: "none" }}
-                        >
-                          Vytvořit první síť
-                        </Button>
-                      </VStack>
-                    </Box>
-                  ) : (
-                    <Box w="100%" overflow="hidden" py={2}>
-                      <SimpleGrid
-                        columns={{ base: 1, lg: 2, xl: 3 }}
-                        spacing={{ base: 3, md: 4 }}
-                        w="100%"
-                      >
-                        {ownedNetworks.map((network) => (
-                          <Box key={network.networkId} w="100%" overflow="hidden">
-                            <NetworkCard
-                              network={network}
-                              onEdit={handleEditNetwork}
-                              isOwnNetwork={true}
-                              showAdminBadge={false}
-                            />
-                          </Box>
-                        ))}
-                      </SimpleGrid>
-                    </Box>
-                  )}
-                </TabPanel>
+                </TabsTrigger>
+              </TabsList>
 
-                {/* Tab 2: Administrované sítě */}
-                <TabPanel p={{ base: 4, md: 6 }} w="100%">
-                  {administeredNetworks.length === 0 ? (
-                    <Box
-                      textAlign="center"
-                      py={{ base: 8, md: 12 }}
-                      borderWidth="1px"
-                      borderRadius="lg"
-                      borderStyle="dashed"
-                      borderColor={useColorModeValue('gray.300', 'gray.600')}
-                      w="100%"
-                    >
-                      <VStack spacing={4} px={{ base: 4, md: 0 }}>
-                        <Text
-                          fontSize={{ base: "md", md: "lg" }}
-                          fontWeight="medium"
-                          wordBreak="break-word"
-                        >
-                          Nemáte přístup k žádným administrovaným sítím
-                        </Text>
-                        <Text
-                          color={useColorModeValue('gray.600', 'gray.400')}
-                          fontSize={{ base: "sm", md: "md" }}
-                          wordBreak="break-word"
-                        >
-                          Zde se zobrazí sítě, ke kterým vám někdo udělil oprávnění
-                        </Text>
-                      </VStack>
-                    </Box>
-                  ) : (
-                    <Box w="100%" overflow="hidden" py={2}>
-                      <SimpleGrid
-                        columns={{ base: 1, lg: 2, xl: 3 }}
-                        spacing={{ base: 3, md: 4 }}
-                        w="100%"
+              {/* Tab Content - Moje sítě */}
+              <TabsContent value="owned" p={{ base: 4, md: 6 }}>
+                {ownedNetworks.length === 0 ? (
+                  <Box
+                    textAlign="center"
+                    py={{ base: 8, md: 12 }}
+                    borderWidth="1px"
+                    borderRadius="lg"
+                    borderStyle="dashed"
+                    borderColor={{ base: "gray.300", _dark: "gray.600" }}
+                    w="100%"
+                  >
+                    <VStack gap={4} px={{ base: 4, md: 0 }}>
+                      <Text fontSize={{ base: "md", md: "lg" }} fontWeight="medium" wordBreak="break-word">
+                        Zatím nemáte žádné sociální sítě
+                      </Text>
+                      <Text color={{ base: "gray.600", _dark: "gray.400" }} fontSize={{ base: "sm", md: "md" }} wordBreak="break-word">
+                        Vytvořte svou první sociální síť
+                      </Text>
+                      <Button
+                        colorPalette="green"
+                        onClick={handleCreateNetwork}
+                        size={{ base: "md", md: "lg" }}
+                        w={{ base: "100%", md: "auto" }}
+                        maxW={{ base: "300px", md: "none" }}
                       >
-                        {administeredNetworks.map((network) => (
-                          <Box key={network.networkId} w="100%" overflow="hidden">
-                            <NetworkCard
-                              network={network}
-                              onEdit={handleEditNetwork}
-                              isOwnNetwork={false}
-                              showAdminBadge={true}
-                            />
-                          </Box>
-                        ))}
-                      </SimpleGrid>
-                    </Box>
-                  )}
-                </TabPanel>
-              </TabPanels>
-            </Tabs>
+                        Vytvořit první síť
+                      </Button>
+                    </VStack>
+                  </Box>
+                ) : (
+                  <SimpleGrid columns={{ base: 1, lg: 2, xl: 3 }} gap={{ base: 3, md: 4 }}>
+                    {ownedNetworks.map((network) => (
+                      <NetworkCard
+                        key={network.networkId}
+                        network={network}
+                        onEdit={handleEditNetwork}
+                        isOwnNetwork={true}
+                        showAdminBadge={false}
+                      />
+                    ))}
+                  </SimpleGrid>
+                )}
+              </TabsContent>
+
+              {/* Tab Content - Administrované sítě */}
+              <TabsContent value="administered" p={{ base: 4, md: 6 }}>
+                {administeredNetworks.length === 0 ? (
+                  <Box
+                    textAlign="center"
+                    py={{ base: 8, md: 12 }}
+                    borderWidth="1px"
+                    borderRadius="lg"
+                    borderStyle="dashed"
+                    borderColor={{ base: "gray.300", _dark: "gray.600" }}
+                    w="100%"
+                  >
+                    <VStack gap={4} px={{ base: 4, md: 0 }}>
+                      <Text fontSize={{ base: "md", md: "lg" }} fontWeight="medium" wordBreak="break-word">
+                        Nemáte přístup k žádným administrovaným sítím
+                      </Text>
+                      <Text color={{ base: "gray.600", _dark: "gray.400" }} fontSize={{ base: "sm", md: "md" }} wordBreak="break-word">
+                        Zde se zobrazí sítě, ke kterým vám někdo udělil oprávnění
+                      </Text>
+                    </VStack>
+                  </Box>
+                ) : (
+                  <SimpleGrid columns={{ base: 1, lg: 2, xl: 3 }} gap={{ base: 3, md: 4 }}>
+                    {administeredNetworks.map((network) => (
+                      <NetworkCard
+                        key={network.networkId}
+                        network={network}
+                        onEdit={handleEditNetwork}
+                        isOwnNetwork={false}
+                        showAdminBadge={true}
+                      />
+                    ))}
+                  </SimpleGrid>
+                )}
+              </TabsContent>
+            </TabsRoot>
           </Box>
 
           {/* Create Network Modal */}
           <CreateNetworkModal
-            isOpen={isOpen}
+            open={isOpen}
             onClose={onClose}
             onNetworkCreated={handleNetworkCreated}
           />

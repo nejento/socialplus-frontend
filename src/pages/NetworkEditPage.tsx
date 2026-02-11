@@ -5,34 +5,26 @@ import {
   Heading,
   Text,
   Button,
-  FormControl,
-  FormLabel,
   Input,
   Textarea,
-  useColorModeValue,
-  useToast,
   Spinner,
-  Alert,
-  AlertIcon,
   HStack,
-  Card,
-  CardBody,
-  Divider,
   IconButton,
   SimpleGrid,
-  useDisclosure,
   Badge,
-  FormErrorMessage,
+  Field,
+  Icon
 } from '@chakra-ui/react';
-import { useParams, useNavigate } from 'react-router';
-import { ArrowBackIcon, AddIcon, CheckIcon, CloseIcon, EditIcon, DeleteIcon } from '@chakra-ui/icons';
+import { MdCheck, MdClose, MdEdit, MdDelete } from 'react-icons/md';
 import { useForm } from 'react-hook-form';
+import { useParams, useNavigate } from 'react-router';
 import { networkAPI, userAPI } from '../services/api';
 import { OwnedNetwork, NetworkToken, NetworkPermission, NetworkType } from '@/types';
 import NetworkTokenModal from '../components/NetworkTokenModal';
 import ConfirmationModal from '../components/ConfirmationModal';
 import UserPermissionModal from '../components/UserPermissionModal';
 import DeleteNetworkModal from '../components/DeleteNetworkModal';
+import { toaster } from '../components/ui/toaster';
 
 interface NetworkForm {
   networkName: string;
@@ -58,32 +50,27 @@ interface UserPermissionForm {
   permission: 'read' | 'write';
 }
 
-const TokenCard: React.FC<{
+const Token: React.FC<{
   token: NetworkToken;
 }> = ({ token }) => {
-  const cardBg = useColorModeValue('white', 'gray.700');
-  const borderColor = useColorModeValue('gray.200', 'gray.600');
-
   return (
-    <Card
-      bg={cardBg}
-      borderColor={borderColor}
+    <Box
+      bg={{ base: "white", _dark: "gray.700" }}
+      borderColor={{ base: "gray.200", _dark: "gray.600" }}
       borderWidth="1px"
-      size="sm"
+      borderRadius="md"
+      p={3}
     >
-      <CardBody>
-        <Text fontWeight="medium" fontSize="sm" textAlign="center">
-          {token.tokenName}
-        </Text>
-      </CardBody>
-    </Card>
+      <Text fontWeight="medium" fontSize="sm" textAlign="center">
+        {token.tokenName}
+      </Text>
+    </Box>
   );
 };
 
 const NetworkEditPage = () => {
   const { networkId } = useParams();
   const navigate = useNavigate();
-  const toast = useToast();
   const isEditMode = !!networkId;
 
   const [loading, setLoading] = useState(isEditMode);
@@ -101,11 +88,23 @@ const NetworkEditPage = () => {
   const [loadingPermissions, setLoadingPermissions] = useState(false);
 
   // Modal states
-  const { isOpen: isTokenModalOpen, onOpen: onTokenModalOpen, onClose: onTokenModalClose } = useDisclosure();
-  const { isOpen: isUserModalOpen, onOpen: onUserModalOpen, onClose: onUserModalClose } = useDisclosure();
-  const { isOpen: isDeleteAllTokensModalOpen, onOpen: onDeleteAllTokensModalOpen, onClose: onDeleteAllTokensModalClose } = useDisclosure();
+  const [isTokenModalOpen, setIsTokenModalOpen] = useState(false);
+  const [isUserModalOpen, setIsUserModalOpen] = useState(false);
+  const [isDeleteAllTokensModalOpen, setIsDeleteAllTokensModalOpen] = useState(false);
+  const [isDeleteNetworkModalOpen, setIsDeleteNetworkModalOpen] = useState(false);
   const [editingPermission, setEditingPermission] = useState<NetworkPermission | null>(null);
-  const { isOpen: isDeleteNetworkModalOpen, onOpen: onDeleteNetworkModalOpen, onClose: onDeleteNetworkModalClose } = useDisclosure();
+
+  const onTokenModalOpen = () => setIsTokenModalOpen(true);
+  const onTokenModalClose = () => setIsTokenModalOpen(false);
+  const onUserModalOpen = () => setIsUserModalOpen(true);
+  const onUserModalClose = () => {
+    setIsUserModalOpen(false);
+    setEditingPermission(null);
+  };
+  const onDeleteAllTokensModalOpen = () => setIsDeleteAllTokensModalOpen(true);
+  const onDeleteAllTokensModalClose = () => setIsDeleteAllTokensModalOpen(false);
+  const onDeleteNetworkModalOpen = () => setIsDeleteNetworkModalOpen(true);
+  const onDeleteNetworkModalClose = () => setIsDeleteNetworkModalOpen(false);
 
   const {
     register,
@@ -118,12 +117,6 @@ const NetworkEditPage = () => {
       note: ''
     }
   });
-
-  const bgColor = useColorModeValue('white', 'gray.800');
-  const borderColor = useColorModeValue('gray.200', 'gray.700');
-  const selectedBg = useColorModeValue('blue.50', 'blue.900');
-  const selectedBorder = useColorModeValue('blue.500', 'blue.300');
-  const hoverBg = useColorModeValue('gray.50', 'gray.700');
 
   useEffect(() => {
     if (isEditMode && networkId) {
@@ -164,11 +157,10 @@ const NetworkEditPage = () => {
       setTokens(response.data);
     } catch (error) {
       console.error('Chyba při načítání tokenů:', error);
-      toast({
+      toaster.create({
         title: 'Chyba při načítání tokenů',
-        description: 'Nepodařilo se načíst autentizační tokeny',
-        status: 'error',
-        duration: 3000, 
+        description: 'Nepodařilo se načíst tokeny',
+        type: 'error'
       });
     } finally {
       setLoadingTokens(false);
@@ -210,11 +202,10 @@ const NetworkEditPage = () => {
       setPermissions(permissionsWithUsers);
     } catch (error) {
       console.error('Chyba při načítání oprávnění:', error);
-      toast({
+      toaster.create({
         title: 'Chyba při načítání oprávnění',
-        description: 'Nepodařilo se načíst oprávnění uživatelů',
-        status: 'error',
-        duration: 3000,
+        description: 'Nepodařilo se načíst oprávnění',
+        type: 'error'
       });
     } finally {
       setLoadingPermissions(false);
@@ -250,24 +241,20 @@ const NetworkEditPage = () => {
           networkNote: formData.note
         });
 
-        toast({
+        toaster.create({
           title: 'Síť vytvořena',
-          description: 'Nová sociální síť byla úspěšně vytvořena',
-          status: 'success',
-          duration: 3000,
-          isClosable: true,
+          description: 'Sociální síť byla úspěšně vytvořena',
+          type: 'success'
         });
 
         navigate(`/networks/edit/${response.data.networkId}`);
         return;
       }
 
-      toast({
-        title: 'Síť aktualizována',
-        description: 'Nastavení sociální sítě bylo úspěšně aktualizováno',
-        status: 'success',
-        duration: 3000,
-        isClosable: true,
+      toaster.create({
+        title: 'Změny uloženy',
+        description: 'Nastavení sítě bylo úspěšně aktualizováno',
+        type: 'success'
       });
 
       reset({
@@ -277,14 +264,10 @@ const NetworkEditPage = () => {
 
     } catch (error) {
       console.error('Chyba při ukládání:', error);
-      toast({
+      toaster.create({
         title: 'Chyba při ukládání',
-        description: isEditMode
-          ? 'Nepodařilo se aktualizovat nastavení sítě'
-          : 'Nepodařilo se vytvořit novou síť',
-        status: 'error',
-        duration: 3000,
-        isClosable: true,
+        description: 'Nepodařilo se uložit nastavení sítě',
+        type: 'error'
       });
     } finally {
       setSaving(false);
@@ -300,22 +283,20 @@ const NetworkEditPage = () => {
       await networkAPI.addNetworkToken(parseInt(networkId), tokenData);
 
       const networkTypeInfo = getNetworkTypeInfo(networkData?.networkType!);
-      toast({
-        title: `${networkTypeInfo?.displayName} tokeny přidány`,
-        description: 'Tokeny byly úspěšně přidány a nakonfigurovány',
-        status: 'success',
-        duration: 3000,
+      toaster.create({
+        title: 'Tokeny přidány',
+        description: `Tokeny pro ${networkTypeInfo?.displayName} byly úspěšně přidány`,
+        type: 'success'
       });
 
       loadTokens();
 
     } catch (error) {
       console.error('Chyba při přidávání tokenů:', error);
-      toast({
+      toaster.create({
         title: 'Chyba při přidávání tokenů',
-        description: 'Nepodařilo se přidat autentizační tokeny',
-        status: 'error',
-        duration: 3000,
+        description: 'Nepodařilo se přidat tokeny',
+        type: 'error'
       });
       throw error; // Re-throw to prevent modal from closing
     } finally {
@@ -326,11 +307,10 @@ const NetworkEditPage = () => {
   // Funkce pro odstranění všech tokenů s potvrzením
   const handleRemoveAllTokens = () => {
     if (tokens.length === 0) {
-      toast({
-        title: 'Žádné tokeny k odstranění',
-        description: 'Nejsou nastaveny žádné autentizační tokeny',
-        status: 'info',
-        duration: 2000,
+      toaster.create({
+        title: 'Žádné tokeny',
+        description: 'Nejsou k dispozici žádné tokeny k odstranění',
+        type: 'info'
       });
       return;
     }
@@ -346,11 +326,10 @@ const NetworkEditPage = () => {
       // Odstraníme všechny tokeny jedním voláním
       await networkAPI.removeNetworkToken(parseInt(networkId));
 
-      toast({
-        title: 'Všechny tokeny odstraněny',
-        description: `Úspěšně odstraněno ${tokens.length} ${tokens.length === 1 ? 'token' : tokens.length < 5 ? 'tokeny' : 'tokenů'}`,
-        status: 'success',
-        duration: 3000,
+      toaster.create({
+        title: 'Tokeny odstraněny',
+        description: 'Všechny tokeny byly úspěšně odstraněny',
+        type: 'success'
       });
 
       onDeleteAllTokensModalClose();
@@ -358,11 +337,10 @@ const NetworkEditPage = () => {
 
     } catch (error) {
       console.error('Chyba při odstraňování tokenů:', error);
-      toast({
+      toaster.create({
         title: 'Chyba při odstraňování tokenů',
-        description: 'Nepodařilo se odstranit všechny autentizační tokeny',
-        status: 'error',
-        duration: 3000,
+        description: 'Nepodařilo se odstranit tokeny',
+        type: 'error'
       });
     } finally {
       setSaving(false);
@@ -391,20 +369,20 @@ const NetworkEditPage = () => {
           granteeId: userData.id,
           permission: formData.permission
         });
-        toast({
-          title: 'Oprávnění aktualizováno',
-          status: 'success',
-          duration: 2000,
+        toaster.create({
+          title: 'Oprávnění upraveno',
+          description: 'Oprávnění bylo úspěšně aktualizováno',
+          type: 'success'
         });
       } else {
         await networkAPI.addNetworkPermission(parseInt(networkId), {
           granteeId: userData.id,
           permission: formData.permission
         });
-        toast({
+        toaster.create({
           title: 'Oprávnění přidáno',
-          status: 'success',
-          duration: 2000,
+          description: 'Uživatelské oprávnění bylo úspěšně přidáno',
+          type: 'success'
         });
       }
 
@@ -415,18 +393,16 @@ const NetworkEditPage = () => {
       console.error('Chyba při ukládání oprávnění:', error);
       
       if (error.response?.status === 404) {
-        toast({
+        toaster.create({
           title: 'Uživatel nenalezen',
-          description: 'Uživatel s tímto jménem neexistuje',
-          status: 'error',
-          duration: 3000,
+          description: 'Zadané uživatelské jméno nebylo nalezeno',
+          type: 'error'
         });
       } else {
-        toast({
+        toaster.create({
           title: 'Chyba při ukládání oprávnění',
-          description: error.response?.data?.message || 'Nepodařilo se uložit oprávnění',
-          status: 'error',
-          duration: 3000,
+          description: 'Nepodařilo se uložit uživatelské oprávnění',
+          type: 'error'
         });
       }
     }
@@ -439,18 +415,18 @@ const NetworkEditPage = () => {
 
     try {
       await networkAPI.removeNetworkPermission(parseInt(networkId), granteeId);
-      toast({
+      toaster.create({
         title: 'Oprávnění odstraněno',
-        status: 'success',
-        duration: 2000,
+        description: 'Uživatelské oprávnění bylo úspěšně odstraněno',
+        type: 'success'
       });
       loadPermissions();
     } catch (error) {
       console.error('Chyba při odstraňování oprávnění:', error);
-      toast({
+      toaster.create({
         title: 'Chyba při odstraňování oprávnění',
-        status: 'error',
-        duration: 3000,
+        description: 'Nepodařilo se odstranit oprávnění',
+        type: 'error'
       });
     }
   };
@@ -473,7 +449,7 @@ const NetworkEditPage = () => {
   if (loading) {
     return (
       <Box p={4} display="flex" justifyContent="center" alignItems="center" minH="50vh">
-        <VStack spacing={4}>
+        <VStack gap={4}>
           <Spinner size="xl" />
           <Text>Načítám data sítě...</Text>
         </VStack>
@@ -485,14 +461,24 @@ const NetworkEditPage = () => {
   if (error) {
     return (
       <Box p={4}>
-        <Alert status="error" borderRadius="md" mb={4}>
-          <AlertIcon />
-          <VStack align="start" spacing={2} flex={1}>
-            <Text fontWeight="bold">Chyba při načítání</Text>
-            <Text fontSize="sm">{error}</Text>
+        <Box
+          p={4}
+          bg={{ base: "red.50", _dark: "red.900" }}
+          borderRadius="md"
+          borderWidth="1px"
+          borderColor={{ base: "red.200", _dark: "red.700" }}
+          mb={4}
+        >
+          <VStack align="start" gap={2}>
+            <Text fontWeight="bold" color={{ base: "red.800", _dark: "red.200" }}>
+              Chyba při načítání
+            </Text>
+            <Text fontSize="sm" color={{ base: "red.700", _dark: "red.300" }}>
+              {error}
+            </Text>
           </VStack>
-        </Alert>
-        <Button onClick={() => navigate('/networks')} leftIcon={<ArrowBackIcon />}>
+        </Box>
+        <Button onClick={() => navigate('/networks')}>
           Zpět na přehled sítí
         </Button>
       </Box>
@@ -502,7 +488,7 @@ const NetworkEditPage = () => {
   return (
     <Box
       minH="100vh"
-      bg={useColorModeValue('gray.50', 'gray.900')}
+      bg={{ base: "gray.50", _dark: "gray.900" }}
       w="100%"
       maxW="100vw"
       overflow="hidden"
@@ -512,18 +498,17 @@ const NetworkEditPage = () => {
         mx="auto"
         w="100%"
       >
-        <VStack spacing={8} align="stretch" w="100%" px={{ base: 0, md: 0 }}>
+        <VStack gap={8} align="stretch" w="100%" px={{ base: 0, md: 0 }}>
           {/* Header */}
-          <Box bg={useColorModeValue('white', 'gray.800')} p={{ base: 4, md: 6 }} borderRadius="lg" shadow="sm" w="100%" overflow="hidden">
-            <VStack spacing={4} align="stretch" w="100%">
+          <Box bg={{ base: "white", _dark: "gray.800" }} p={{ base: 4, md: 6 }} borderRadius="lg" shadow="sm" w="100%" overflow="hidden">
+            <VStack gap={4} align="stretch" w="100%">
               <VStack
-                spacing={3}
+                gap={3}
                 align="stretch"
                 w="100%"
                 display={{ base: "flex", md: "none" }}
               >
                 <Button
-                  leftIcon={<ArrowBackIcon />}
                   onClick={handleCancel}
                   size="md"
                   variant="outline"
@@ -533,10 +518,9 @@ const NetworkEditPage = () => {
                 </Button>
                 {isEditMode && (
                   <Button
-                    leftIcon={<DeleteIcon />}
                     onClick={onDeleteNetworkModalOpen}
                     size="md"
-                    colorScheme="red"
+                    colorPalette="red"
                     variant="outline"
                     w="100%"
                   >
@@ -547,7 +531,7 @@ const NetworkEditPage = () => {
                   {isEditMode ? 'Upravit síť' : 'Vytvořit novou síť'}
                 </Heading>
                 <Text
-                  color={useColorModeValue('gray.600', 'gray.400')}
+                  color={{ base: "gray.600", _dark: "gray.400" }}
                   fontSize="md"
                   wordBreak="break-word"
                 >
@@ -566,12 +550,12 @@ const NetworkEditPage = () => {
                 flexWrap="wrap"
                 gap={4}
               >
-                <VStack align="start" spacing={2}>
+                <VStack align="start" gap={2}>
                   <Heading size="xl" wordBreak="break-word">
                     {isEditMode ? 'Upravit síť' : 'Vytvořit novou síť'}
                   </Heading>
                   <Text
-                    color={useColorModeValue('gray.600', 'gray.400')}
+                    color={{ base: "gray.600", _dark: "gray.400" }}
                     fontSize="lg"
                     wordBreak="break-word"
                   >
@@ -582,9 +566,8 @@ const NetworkEditPage = () => {
                   </Text>
                 </VStack>
 
-                <HStack spacing={3} flexWrap="wrap">
+                <HStack gap={3} flexWrap="wrap">
                   <Button
-                    leftIcon={<ArrowBackIcon />}
                     onClick={handleCancel}
                     size="lg"
                     variant="outline"
@@ -593,13 +576,14 @@ const NetworkEditPage = () => {
                   </Button>
                   {isEditMode && (
                     <IconButton
-                      icon={<DeleteIcon />}
                       onClick={onDeleteNetworkModalOpen}
                       aria-label="Odstranit síť"
                       size="lg"
-                      colorScheme="red"
+                      colorPalette="red"
                       variant="outline"
-                    />
+                    >
+                      <Icon as={MdDelete} />
+                    </IconButton>
                   )}
                 </HStack>
               </HStack>
@@ -607,77 +591,80 @@ const NetworkEditPage = () => {
           </Box>
 
           {/* Main Content */}
-          <Card borderWidth="1px" borderRadius="lg" overflow="hidden" shadow="sm">
-            <CardBody>
-              <VStack spacing={4} align="stretch">
-                <FormControl isRequired>
-                  <FormLabel>Název sítě</FormLabel>
-                  <Input
-                    {...register('networkName', {
-                      required: 'Zadejte prosím název sítě',
-                      minLength: {
-                        value: 3,
-                        message: 'Název sítě musí mít alespoň 3 znaky'
-                      }
-                    })}
-                    placeholder="Např. Oficiální Facebook stránka"
-                    isInvalid={!!errors.networkName}
-                  />
-                  <FormErrorMessage>
-                    {errors.networkName && errors.networkName.message}
-                  </FormErrorMessage>
-                </FormControl>
+          <Box
+            bg={{ base: "white", _dark: "gray.800" }}
+            borderWidth="1px"
+            borderRadius="lg"
+            overflow="hidden"
+            shadow="sm"
+            p={{ base: 4, md: 6 }}
+          >
+            <VStack gap={4} align="stretch">
+              <Field.Root required invalid={!!errors.networkName}>
+                <Field.Label>Název sítě</Field.Label>
+                <Input
+                  {...register('networkName', {
+                    required: 'Zadejte prosím název sítě',
+                    minLength: {
+                      value: 3,
+                      message: 'Název sítě musí mít alespoň 3 znaky'
+                    }
+                  })}
+                  placeholder="Např. Oficiální Facebook stránka"
+                />
+                <Field.ErrorText>
+                  {errors.networkName?.message}
+                </Field.ErrorText>
+              </Field.Root>
 
-                <FormControl>
-                  <FormLabel>Popis (poznámka)</FormLabel>
-                  <Textarea
-                    {...register('note')}
-                    placeholder="Krátký popis nebo poznámka k síti"
-                    resize="none"
-                  />
-                </FormControl>
-
-                <Divider />
+              <Field.Root>
+                <Field.Label>Popis (poznámka)</Field.Label>
+                <Textarea
+                  {...register('note')}
+                  placeholder="Krátký popis nebo poznámka k síti"
+                  resize="none"
+                />
+              </Field.Root>
 
                 {/* Network Type Selection - only for new networks */}
                 {!isEditMode && (
-                  <VStack spacing={4} align="stretch">
+                  <VStack gap={4} align="stretch">
                     <Heading size="md">Vyberte typ sociální sítě</Heading>
 
-                    <Text fontSize="sm" color={useColorModeValue('gray.600', 'gray.400')}>
+                    <Text fontSize="sm" color={{ base: "gray.600", _dark: "gray.400" }}>
                       Zvolte typ sociální sítě, kterou chcete spravovat
                     </Text>
 
-                    <SimpleGrid columns={{ base: 1, md: 2, lg: 3 }} spacing={4}>
+                    <SimpleGrid columns={{ base: 1, md: 2, lg: 3 }} gap={4}>
                       {NETWORK_TYPES.map((network) => (
                         <Box
                           key={network.type}
                           as="button"
-                          type="button"
+                         
                           p={4}
                           borderWidth="2px"
                           borderRadius="lg"
-                          borderColor={selectedNetworkType === network.type ? selectedBorder : borderColor}
-                          bg={selectedNetworkType === network.type ? selectedBg : 'transparent'}
+                          borderColor={selectedNetworkType === network.type ? { base: "blue.500", _dark: "blue.300" } : { base: "gray.200", _dark: "gray.700" }}
+                          bg={selectedNetworkType === network.type ? { base: "blue.50", _dark: "blue.900" } : 'transparent'}
                           cursor="pointer"
                           transition="all 0.2s"
                           _hover={{
-                            bg: selectedNetworkType === network.type ? selectedBg : hoverBg,
-                            borderColor: selectedNetworkType === network.type ? selectedBorder : 'gray.300',
+                            bg: selectedNetworkType === network.type ? { base: "blue.50", _dark: "blue.900" } : { base: "gray.50", _dark: "gray.700" },
+                            borderColor: selectedNetworkType === network.type ? { base: "blue.500", _dark: "blue.300" } : { base: "gray.300", _dark: "gray.600" }
                           }}
                           onClick={() => setSelectedNetworkType(network.type)}
                           textAlign="left"
                         >
-                          <VStack align="start" spacing={3}>
+                          <VStack align="start" gap={3}>
                             <HStack>
-                              <Badge colorScheme={network.color} variant="solid" px={2} py={1}>
+                              <Badge colorPalette={network.color} variant="solid" px={2} py={1}>
                                 {network.displayName}
                               </Badge>
                               {selectedNetworkType === network.type && (
-                                <CheckIcon color={`${network.color}.500`} boxSize={4} />
+                                <Icon as={MdCheck} color={`${network.color}.500`} boxSize={4} />
                               )}
                             </HStack>
-                            <Text fontSize="sm" color={useColorModeValue('gray.600', 'gray.400')}>
+                            <Text fontSize="sm" color={{ base: "gray.600", _dark: "gray.400" }}>
                               {network.description}
                             </Text>
                           </VStack>
@@ -686,266 +673,268 @@ const NetworkEditPage = () => {
                     </SimpleGrid>
 
                     {!selectedNetworkType && (
-                      <Alert status="info" borderRadius="md">
-                        <AlertIcon />
-                        <Text fontSize="sm">
+                      <Box
+                        p={3}
+                        bg={{ base: "blue.50", _dark: "blue.900" }}
+                        borderRadius="md"
+                        borderWidth="1px"
+                        borderColor={{ base: "blue.200", _dark: "blue.700" }}
+                      >
+                        <Text fontSize="sm" color={{ base: "blue.800", _dark: "blue.200" }}>
                           Vyberte typ sociální sítě pro pokračování
                         </Text>
-                      </Alert>
+                      </Box>
                     )}
                   </VStack>
                 )}
 
-                <Divider />
-
                 <HStack width="full" justify="space-between">
                   <Button
-                    colorScheme="blue"
+                    colorPalette="blue"
                     onClick={handleSubmit(onSubmit)}
-                    isLoading={saving}
+                    loading={saving}
                     loadingText={isEditMode ? 'Ukládání...' : 'Vytváření...'}
                     size="lg"
                     width="full"
-                    isDisabled={!isEditMode && !selectedNetworkType}
+                    disabled={!isEditMode && !selectedNetworkType}
                   >
                     {isEditMode ? 'Uložit změny' : 'Vytvořit síť'}
                   </Button>
                 </HStack>
               </VStack>
-            </CardBody>
-          </Card>
+            </Box>
 
-          <VStack spacing={4} align="stretch">
+          {/* VStack gap for sections */}
+          <VStack gap={4} align="stretch">
             {/* Tokens Section - pouze v edit mode */}
             {isEditMode && (
-              <Card
-                bg={bgColor}
-                borderColor={borderColor}
+              <Box
+                bg={{ base: "white", _dark: "gray.800" }}
+                borderColor={{ base: "gray.200", _dark: "gray.600" }}
                 borderWidth="1px"
+                borderRadius="lg"
                 shadow="md"
+                p={{ base: 4, md: 6 }}
               >
-                <CardBody>
-                  <VStack spacing={4} align="stretch">
-                    <Heading size="md">Autentizační tokeny</Heading>
+                <VStack gap={4} align="stretch">
+                  <Heading size="md">Autentizační tokeny</Heading>
 
-                    <Text fontSize="sm" color={useColorModeValue('gray.600', 'gray.400')}>
-                      Spravujte API tokeny pro komunikaci se sociálními sítěmi
-                    </Text>
+                  <Text fontSize="sm" color={{ base: "gray.600", _dark: "gray.400" }}>
+                    Spravujte API tokeny pro komunikaci se sociálními sítěmi
+                  </Text>
 
-                    {/* Conditional buttons based on token state */}
-                    {tokens.length === 0 ? (
-                      // Show only Add button when no tokens exist
-                      <Button
-                        leftIcon={<AddIcon />}
-                        colorScheme="green"
-                        size={{ base: 'sm', md: 'md' }}
-                        onClick={onTokenModalOpen}
-                        width={{ base: 'full', md: 'auto' }}
-                      >
-                        Přidat tokeny pro {getNetworkTypeInfo(networkData?.networkType!)?.displayName}
-                      </Button>
-                    ) : (
-                      // Show only Remove button when tokens exist
-                      <Button
-                        leftIcon={<CloseIcon />}
-                        colorScheme="red"
-                        size={{ base: 'sm', md: 'md' }}
-                        onClick={handleRemoveAllTokens}
-                        width={{ base: 'full', md: 'auto' }}
-                      >
-                        Odstranit všechny tokeny
-                      </Button>
-                    )}
+                  {/* Conditional buttons based on token state */}
+                  {tokens.length === 0 ? (
+                    // Show only Add button when no tokens exist
+                    <Button
+                      colorPalette="green"
+                      size={{ base: 'sm', md: 'md' }}
+                      onClick={onTokenModalOpen}
+                      width={{ base: 'full', md: 'auto' }}
+                    >
+                      Přidat tokeny pro {getNetworkTypeInfo(networkData?.networkType!)?.displayName}
+                    </Button>
+                  ) : (
+                    // Show only Remove button when tokens exist
+                    <Button
+                      colorPalette="red"
+                      size={{ base: 'sm', md: 'md' }}
+                      onClick={handleRemoveAllTokens}
+                      width={{ base: 'full', md: 'auto' }}
+                    >
+                      Odstranit všechny tokeny
+                    </Button>
+                  )}
 
-                    {loadingTokens ? (
-                      <Box display="flex" justifyContent="center" py={4}>
-                        <Spinner />
-                      </Box>
-                    ) : tokens.length === 0 ? (
-                      <Box
-                        textAlign="center"
-                        py={8}
-                        borderWidth="1px"
-                        borderRadius="lg"
-                        borderStyle="dashed"
-                        borderColor={useColorModeValue('gray.300', 'gray.600')}
-                      >
-                        <VStack spacing={3}>
-                          <Text fontSize="md" fontWeight="medium">
-                            Zatím nejsou nastaveny žádné tokeny
-                          </Text>
-                          <Text fontSize="sm" color={useColorModeValue('gray.600', 'gray.400')}>
-                            Přidejte autentizační tokeny pro komunikaci s API sociálních sítí
-                          </Text>
-                        </VStack>
-                      </Box>
-                    ) : (
-                      <VStack spacing={3} align="stretch">
-                        <Text fontSize="sm" fontWeight="medium">
-                          Nakonfigurované tokeny:
+                  {loadingTokens ? (
+                    <Box display="flex" justifyContent="center" py={4}>
+                      <Spinner />
+                    </Box>
+                  ) : tokens.length === 0 ? (
+                    <Box
+                      textAlign="center"
+                      py={8}
+                      borderWidth="1px"
+                      borderRadius="lg"
+                      borderStyle="dashed"
+                      borderColor={{ base: "gray.300", _dark: "gray.600" }}
+                    >
+                      <VStack gap={3}>
+                        <Text fontSize="md" fontWeight="medium">
+                          Zatím nejsou nastaveny žádné tokeny
                         </Text>
-                        <SimpleGrid columns={{ base: 1, md: 2 }} spacing={4}>
-                          {tokens.map((token, index) => (
-                            <TokenCard
-                              key={`${token.tokenName}-${index}`}
-                              token={token}
-                            />
-                          ))}
-                        </SimpleGrid>
+                        <Text fontSize="sm" color={{ base: "gray.600", _dark: "gray.400" }}>
+                          Přidejte autentizační tokeny pro komunikaci s API sociálních sítí
+                        </Text>
                       </VStack>
-                    )}
-                  </VStack>
-                </CardBody>
-              </Card>
+                    </Box>
+                  ) : (
+                    <VStack gap={3} align="stretch">
+                      <Text fontSize="sm" fontWeight="medium">
+                        Nakonfigurované tokeny:
+                      </Text>
+                      <SimpleGrid columns={{ base: 1, md: 2 }} gap={4}>
+                        {tokens.map((token, index) => (
+                          <Token
+                            key={`${token.tokenName}-${index}`}
+                            token={token}
+                          />
+                        ))}
+                      </SimpleGrid>
+                    </VStack>
+                  )}
+                </VStack>
+              </Box>
             )}
 
             {/* User Permissions Section - pouze v edit mode */}
             {isEditMode && (
-              <Card
-                bg={bgColor}
-                borderColor={borderColor}
+              <Box
+                bg={{ base: "white", _dark: "gray.800" }}
+                borderColor={{ base: "gray.200", _dark: "gray.600" }}
                 borderWidth="1px"
+                borderRadius="lg"
                 shadow="md"
+                p={{ base: 4, md: 6 }}
               >
-                <CardBody>
-                  <VStack spacing={4} align="stretch">
-                    <Heading size="md">Uživatelská oprávnění</Heading>
+                <VStack gap={4} align="stretch">
+                  <Heading size="md">Uživatelská oprávnění</Heading>
 
-                    <Text fontSize="sm" color={useColorModeValue('gray.600', 'gray.400')}>
-                      Spravujte oprávnění uživatelů pro tuto sociální síť
-                    </Text>
+                  <Text fontSize="sm" color={{ base: "gray.600", _dark: "gray.400" }}>
+                    Spravujte oprávnění uživatelů pro tuto sociální síť
+                  </Text>
 
-                    <Button
-                      leftIcon={<AddIcon />}
-                      colorScheme="green"
-                      size={{ base: 'sm', md: 'md' }}
-                      onClick={handleAddPermission}
-                      width={{ base: 'full', md: 'auto' }}
+                  <Button
+                    colorPalette="green"
+                    size={{ base: 'sm', md: 'md' }}
+                    onClick={handleAddPermission}
+                    width={{ base: 'full', md: 'auto' }}
+                  >
+                    Přidat uživatele
+                  </Button>
+
+                  {loadingPermissions ? (
+                    <Box display="flex" justifyContent="center" py={4}>
+                      <Spinner />
+                    </Box>
+                  ) : permissions.length === 0 ? (
+                    <Box
+                      textAlign="center"
+                      py={8}
+                      borderWidth="1px"
+                      borderRadius="lg"
+                      borderStyle="dashed"
+                      borderColor={{ base: "gray.300", _dark: "gray.600" }}
                     >
-                      Přidat uživatele
-                    </Button>
-
-                    {loadingPermissions ? (
-                      <Box display="flex" justifyContent="center" py={4}>
-                        <Spinner />
-                      </Box>
-                    ) : permissions.length === 0 ? (
-                      <Box
-                        textAlign="center"
-                        py={8}
-                        borderWidth="1px"
-                        borderRadius="lg"
-                        borderStyle="dashed"
-                        borderColor={useColorModeValue('gray.300', 'gray.600')}
-                      >
-                        <VStack spacing={3}>
-                          <Text fontSize="md" fontWeight="medium">
-                            Zatím nejsou nastavena žádná oprávnění
-                          </Text>
-                          <Text fontSize="sm" color={useColorModeValue('gray.600', 'gray.400')}>
-                            Přidejte uživatelská oprávnění pro tuto sociální síť
-                          </Text>
-                        </VStack>
-                      </Box>
-                    ) : (
-                      <SimpleGrid columns={{ base: 1, md: 2 }} spacing={4}>
-                        {permissions.map((permission, index) => (
-                          <Card
-                            key={`${permission.user?.username}-${index}`}
-                            bg={bgColor}
-                            borderColor={borderColor}
-                            borderWidth="1px"
-                            shadow="md"
-                          >
-                            <CardBody>
-                              <VStack spacing={3} align="stretch">
-                                <HStack justify="space-between" width="100%">
-                                  <VStack align="start" spacing={1} flex={1}>
-                                    <Text fontWeight="bold" fontSize="sm" isTruncated>
-                                      {permission.user?.displayname || 'Neznámý uživatel'}
-                                    </Text>
-                                    <Text fontSize="xs" color={useColorModeValue('gray.600', 'gray.400')} isTruncated>
-                                      @{permission.user?.username || 'unknown'}
-                                    </Text>
-                                  </VStack>
-                                  <HStack spacing={1}>
-                                    <IconButton
-                                      aria-label="Upravit oprávnění"
-                                      icon={<EditIcon />}
-                                      size="xs"
-                                      variant="ghost"
-                                      onClick={() => handleEditPermission(permission)}
-                                    />
-                                    <IconButton
-                                      aria-label="Odstranit oprávnění"
-                                      icon={<CloseIcon />}
-                                      size="xs"
-                                      variant="ghost"
-                                      colorScheme="red"
-                                      onClick={() => handleRemovePermission(permission.granteeId)}
-                                    />
-                                  </HStack>
-                                </HStack>
-
-                                <HStack>
-                                  <Text fontWeight="medium" fontSize="sm">Oprávnění:</Text>
-                                  <Badge
-                                    colorScheme={permission.permission === 'write' ? 'green' : 'blue'}
-                                    fontSize="xs"
-                                    px={2}
-                                    py={1}
-                                    borderRadius="md"
-                                  >
-                                    {permission.permission === 'write' ? 'Úplný přístup' : 'Pouze čtení'}
-                                  </Badge>
-                                </HStack>
+                      <VStack gap={3}>
+                        <Text fontSize="md" fontWeight="medium">
+                          Zatím nejsou nastavena žádná oprávnění
+                        </Text>
+                        <Text fontSize="sm" color={{ base: "gray.600", _dark: "gray.400" }}>
+                          Přidejte uživatelská oprávnění pro tuto sociální síť
+                        </Text>
+                      </VStack>
+                    </Box>
+                  ) : (
+                    <SimpleGrid columns={{ base: 1, md: 2 }} gap={4}>
+                      {permissions.map((permission, index) => (
+                        <Box
+                          key={`${permission.user?.username}-${index}`}
+                          bg={{ base: "white", _dark: "gray.700" }}
+                          borderColor={{ base: "gray.200", _dark: "gray.600" }}
+                          borderWidth="1px"
+                          borderRadius="md"
+                          shadow="sm"
+                          p={4}
+                        >
+                          <VStack gap={3} align="stretch">
+                            <HStack justify="space-between" width="100%">
+                              <VStack align="start" gap={1} flex={1}>
+                                <Text fontWeight="bold" fontSize="sm" lineClamp={1}>
+                                  {permission.user?.displayname || 'Neznámý uživatel'}
+                                </Text>
+                                <Text fontSize="xs" color={{ base: "gray.600", _dark: "gray.400" }} lineClamp={1}>
+                                  @{permission.user?.username || 'unknown'}
+                                </Text>
                               </VStack>
-                            </CardBody>
-                          </Card>
-                        ))}
-                      </SimpleGrid>
-                    )}
-                  </VStack>
-                </CardBody>
-              </Card>
+                              <HStack gap={1}>
+                                <IconButton
+                                  aria-label="Upravit oprávnění"
+                                  size="xs"
+                                  variant="ghost"
+                                  onClick={() => handleEditPermission(permission)}
+                                >
+                                  <Icon as={MdEdit} />
+                                </IconButton>
+                                <IconButton
+                                  aria-label="Odstranit oprávnění"
+                                  size="xs"
+                                  variant="ghost"
+                                  colorPalette="red"
+                                  onClick={() => handleRemovePermission(permission.granteeId)}
+                                >
+                                  <Icon as={MdClose} />
+                                </IconButton>
+                              </HStack>
+                            </HStack>
+
+                            <HStack>
+                              <Text fontWeight="medium" fontSize="sm">Oprávnění:</Text>
+                              <Badge
+                                colorPalette={permission.permission === 'write' ? 'green' : 'blue'}
+                                fontSize="xs"
+                                px={2}
+                                py={1}
+                                borderRadius="md"
+                              >
+                                {permission.permission === 'write' ? 'Úplný přístup' : 'Pouze čtení'}
+                              </Badge>
+                            </HStack>
+                          </VStack>
+                        </Box>
+                      ))}
+                    </SimpleGrid>
+                  )}
+                </VStack>
+              </Box>
             )}
           </VStack>
 
           {/* NetworkTokenModal - uses the new universal modal component */}
           {networkData && (
             <NetworkTokenModal
-              isOpen={isTokenModalOpen}
+              open={isTokenModalOpen}
               onClose={onTokenModalClose}
               networkType={networkData.networkType}
               onSubmit={handleAddTokens}
-              isLoading={saving}
+              loading={saving}
             />
           )}
 
           {/* UserPermissionModal - uses the new user permission modal component */}
           <UserPermissionModal
-            isOpen={isUserModalOpen}
+            open={isUserModalOpen}
             onClose={onUserModalClose}
             onSubmit={onSubmitPermission}
-            isLoading={saving}
+            loading={saving}
             editingPermission={editingPermission}
           />
 
           {/* Delete All Tokens Confirmation Modal */}
           <ConfirmationModal
-            isOpen={isDeleteAllTokensModalOpen}
+            open={isDeleteAllTokensModalOpen}
             onClose={onDeleteAllTokensModalClose}
             title="Odstranit všechny tokeny"
             message={`Opravdu chcete odstranit všechny tokeny (${tokens.length})? Tato akce je nevratná.`}
             confirmText="Ano, odstranit"
             onConfirm={confirmDeleteAllTokens}
-            isLoading={saving}
-            colorScheme="red"
+            loading={saving}
+            colorPalette="red"
           />
 
           {/* Delete Network Confirmation Modal */}
           <DeleteNetworkModal
-            isOpen={isDeleteNetworkModalOpen}
+            open={isDeleteNetworkModalOpen}
             onClose={onDeleteNetworkModalClose}
             networkName={networkData?.networkName || ''}
             onConfirm={async () => {
@@ -955,11 +944,10 @@ const NetworkEditPage = () => {
                 setSaving(true);
                 await networkAPI.deleteNetwork(parseInt(networkId));
 
-                toast({
+                toaster.create({
                   title: 'Síť odstraněna',
                   description: 'Sociální síť byla úspěšně odstraněna',
-                  status: 'success',
-                  duration: 3000,
+                  type: 'success'
                 });
 
                 navigate('/networks');
@@ -971,12 +959,10 @@ const NetworkEditPage = () => {
                   ? 'Síť se nepovedlo odstranit, je možné, že jsou na ni připojené příspěvky.'
                   : 'Nepodařilo se odstranit sociální síť.';
 
-                toast({
-                  title: 'Chyba při odstraňování sítě',
+                toaster.create({
+                  title: 'Chyba při odstraňování',
                   description: errorMessage,
-                  status: 'error',
-                  duration: 5000,
-                  isClosable: true,
+                  type: 'error'
                 });
               } finally {
                 setSaving(false);

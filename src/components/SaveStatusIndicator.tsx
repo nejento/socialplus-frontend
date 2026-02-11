@@ -1,6 +1,6 @@
 import React from 'react';
-import { HStack, Text, Spinner } from '@chakra-ui/react';
-import { CheckIcon } from '@chakra-ui/icons';
+import { HStack, Text, Spinner, Icon } from '@chakra-ui/react';
+import { MdCheck } from 'react-icons/md';
 
 interface SaveStatusIndicatorProps {
   status?: 'saved' | 'saving' | 'error';
@@ -29,8 +29,8 @@ export const SaveStatusIndicator: React.FC<SaveStatusIndicatorProps> = ({ status
   if (!status) return null;
 
   return (
-    <HStack spacing={1}>
-      {status === 'saved' && <CheckIcon color={getStatusColor()} w={3} h={3} />}
+    <HStack gap={1}>
+      {status === 'saved' && <Icon as={MdCheck} color={getStatusColor()} w={3} h={3} />}
       {status === 'saving' && <Spinner size="xs" color={getStatusColor()} />}
       <Text fontSize="xs" color={getStatusColor()}>
         {getStatusText()}

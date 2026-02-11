@@ -1,14 +1,13 @@
-import React, { useState } from 'react';
+import React from 'react';
 import {
   Box,
   VStack,
   HStack,
   Text,
   IconButton,
-  useToast,
-  useColorModeValue
+  Icon
 } from '@chakra-ui/react';
-import { DownloadIcon, ViewIcon, CloseIcon } from '@chakra-ui/icons';
+import { MdDownload, MdVisibility, MdClose } from 'react-icons/md';
 import { PostFile, NetworkInfo } from '@/types';
 import { postsAPI } from '../services/api';
 import NetworkSelector from './NetworkSelector';
@@ -26,20 +25,15 @@ interface FileAttachmentProps {
 export const FileAttachment: React.FC<FileAttachmentProps> = ({
   file,
   postId,
-  onRemove,
   availableNetworks = [],
   selectedNetworkIds = [],
   onNetworkToggle,
+  onRemove,
   isNetworkSelectorDisabled = false
 }) => {
-  const [downloading, setDownloading] = useState(false);
-  const toast = useToast();
-
   const handleDownload = async () => {
     try {
-      setDownloading(true);
       const response = await postsAPI.downloadFile(postId, file.id);
-
       const blob = new Blob([response.data]);
       const url = window.URL.createObjectURL(blob);
       const link = document.createElement('a');
@@ -49,110 +43,109 @@ export const FileAttachment: React.FC<FileAttachmentProps> = ({
       link.click();
       document.body.removeChild(link);
       window.URL.revokeObjectURL(url);
-
-      toast({
-        title: 'Soubor stažen',
-        status: 'success',
-        duration: 2000,
-      });
     } catch (error) {
-      toast({
-        title: 'Chyba při stahování',
-        description: 'Nepodařilo se stáhnout soubor',
-        status: 'error',
-        duration: 3000,
-      });
-    } finally {
-      setDownloading(false);
+      console.error('Chyba při stahování souboru:', error);
     }
   };
 
-  const handleView = async () => {
-    try {
-      const response = await postsAPI.downloadFile(postId, file.id);
+  const handlePreview = () => {
+    // Placeholder pro budoucí implementaci náhledu
+    console.log('Preview:', file.fileName);
+  };
 
-      const blob = new Blob([response.data]);
-      const url = window.URL.createObjectURL(blob);
-      window.open(url, '_blank');
-
-      setTimeout(() => {
-        window.URL.revokeObjectURL(url);
-      }, 1000);
-
-      toast({
-        title: 'Soubor zobrazen',
-        status: 'success',
-        duration: 2000,
-      });
-    } catch (error) {
-      toast({
-        title: 'Chyba při zobrazení',
-        description: 'Nepodařilo se zobrazit soubor',
-        status: 'error',
-        duration: 3000,
-      });
+  const handleRemove = () => {
+    if (onRemove) {
+      onRemove(file.id);
     }
   };
+
+  const isImage = file.fileType?.startsWith('image/');
 
   return (
     <Box
       p={3}
       borderWidth="1px"
       borderRadius="md"
-      borderColor={useColorModeValue('gray.200', 'gray.600')}
-      bg={useColorModeValue('gray.50', 'gray.700')}
+      borderColor={{ base: "gray.200", _dark: "gray.600" }}
+      bg={{ base: "gray.50", _dark: "gray.700" }}
       position="relative"
     >
-      <VStack spacing={3} align="stretch">
+      <VStack gap={3} align="stretch">
         <HStack justify="space-between">
-          <VStack align="start" spacing={1} flex={1}>
-            <Text fontSize="sm" fontWeight="medium" isTruncated>
+          <VStack align="start" gap={1} flex={1}>
+            <Text fontSize="sm" fontWeight="medium" truncate>
               {file.fileName}
             </Text>
-            <Text fontSize="xs" color={useColorModeValue('gray.600', 'gray.400')}>
-              ID: {file.id}
+            <Text fontSize="xs" color={{ base: "gray.500", _dark: "gray.400" }}>
+              {file.fileType} • {(file.fileSize / 1024 / 1024).toFixed(2)} MB
             </Text>
           </VStack>
-          <HStack spacing={2}>
+
+          <HStack gap={1}>
             <IconButton
               aria-label="Stáhnout soubor"
-              icon={<DownloadIcon />}
-              size="sm"
-              variant="ghost"
               onClick={handleDownload}
-              isLoading={downloading}
-            />
-            <IconButton
-              aria-label="Zobrazit soubor"
-              icon={<ViewIcon />}
               size="sm"
               variant="ghost"
-              onClick={handleView}
-            />
-            {onRemove && (
+            >
+              <Icon as={MdDownload} />
+            </IconButton>
+
+            {isImage && (
               <IconButton
-                aria-label="Smazat soubor"
-                icon={<CloseIcon />}
+                aria-label="Zobrazit náhled"
+                onClick={handlePreview}
                 size="sm"
                 variant="ghost"
-                colorScheme="red"
-                onClick={() => onRemove(file.id)}
-              />
+              >
+                <Icon as={MdVisibility} />
+              </IconButton>
+            )}
+
+            {onRemove && (
+              <IconButton
+                aria-label="Odstranit soubor"
+                onClick={handleRemove}
+                size="sm"
+                variant="ghost"
+                colorPalette="red"
+              >
+                <Icon as={MdClose} />
+              </IconButton>
             )}
           </HStack>
         </HStack>
 
+        {/* Obrázek náhled */}
+        {isImage && (
+          <Box>
+            <img
+              src={`/api/posts/${postId}/files/${file.id}/preview`}
+              alt={file.fileName}
+              style={{
+                width: '100%',
+                height: '150px',
+                objectFit: 'cover',
+                borderRadius: '6px'
+              }}
+            />
+          </Box>
+        )}
+
+        {/* Network Selector */}
         {availableNetworks.length > 0 && onNetworkToggle && (
-          <Box pt={2} borderTop="1px" borderColor={useColorModeValue('gray.200', 'gray.600')}>
-            <Text fontSize="xs" fontWeight="medium" color={useColorModeValue('gray.700', 'gray.300')} mb={2}>
+          <Box>
+            <Text fontSize="xs" fontWeight="medium" mb={2} color={{ base: "gray.700", _dark: "gray.300" }}>
               Sociální sítě:
             </Text>
             <NetworkSelector
               availableNetworks={availableNetworks}
               selectedNetworkIds={selectedNetworkIds}
-              onNetworkToggle={(networkId, isSelected) => onNetworkToggle(file.id, networkId, isSelected)}
-              isLoading={false}
-              isDisabled={isNetworkSelectorDisabled}
+              onNetworkToggle={(networkId, isSelected) =>
+                onNetworkToggle(file.id, networkId, isSelected)
+              }
+              loading={false}
+              disabled={isNetworkSelectorDisabled}
             />
           </Box>
         )}

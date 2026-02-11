@@ -1,26 +1,28 @@
-import React, {useMemo, useState} from 'react';
+import React, { useMemo, useState } from 'react';
 import {
-    Badge,
-    Box,
-    Center,
-    FormControl,
-    FormLabel,
-    Grid,
-    Heading,
-    HStack,
-    IconButton,
-    Select,
-    Spinner,
-    Text,
-    Tooltip,
-    useColorModeValue,
-    VStack,
+  Box,
+  Center,
+  Grid,
+  Heading,
+  HStack,
+  IconButton,
+  Spinner,
+  Text,
+  VStack,
+  SelectRoot,
+  SelectTrigger,
+  SelectValueText,
+  SelectContent,
+  SelectPositioner,
+  SelectItem,
+  createListCollection,
+  Tooltip
 } from '@chakra-ui/react';
-import {ChevronLeftIcon, ChevronRightIcon} from '@chakra-ui/icons';
-import {useNavigate} from 'react-router';
-import {useQuery} from '@tanstack/react-query';
-import {networkAPI, postsAPI} from '../services/api';
-import {NetworkInfo, PostDetailedListItem} from '@/types';
+import { MdChevronLeft, MdChevronRight } from 'react-icons/md';
+import { useNavigate } from 'react-router';
+import { useQuery } from '@tanstack/react-query';
+import { networkAPI, postsAPI } from '../services/api';
+import { NetworkInfo, PostDetailedListItem } from '@/types';
 
 interface CalendarEvent {
   postId: number;
@@ -35,9 +37,6 @@ const CalendarPage: React.FC = () => {
   const navigate = useNavigate();
   const [currentDate, setCurrentDate] = useState(new Date());
   const [selectedNetworkId, setSelectedNetworkId] = useState<number | null>(null);
-
-  const borderColor = useColorModeValue('gray.200', 'gray.700');
-  const todayBg = useColorModeValue('blue.50', 'blue.900');
 
   // Získání prvního a posledního dne měsíce pro API call
   const monthStart = useMemo(() => {
@@ -64,26 +63,39 @@ const CalendarPage: React.FC = () => {
       const allNetworks = allResponse.data;
 
       // Spojíme sítě - vlastní mají prioritu
-        return [
-          ...ownedNetworks,
-          ...allNetworks.filter((network: any) =>
-              !ownedNetworks.some((owned: any) => owned.networkId === network.networkId)
-          )
+      return [
+        ...ownedNetworks,
+        ...allNetworks.filter((network: any) =>
+          !ownedNetworks.some((owned: any) => owned.networkId === network.networkId)
+        )
       ];
-    },
+    }
   });
 
+  const networksCollection = useMemo(() => {
+    const items = networksData?.map((network: any) => ({
+      label: network.networkName,
+      value: network.networkId.toString()
+    })) || [];
+    return createListCollection({
+      items: [
+        { label: "Všechny sítě", value: "" },
+        ...items
+      ]
+    });
+  }, [networksData]);
+
   // Dotaz na filtrované příspěvky pro aktuální měsíc
-  const { data: postsData, isLoading } = useQuery({
+  const { data: postsData, isLoading: loading } = useQuery({
     queryKey: ['calendar-posts', monthStart, monthEnd, selectedNetworkId],
     queryFn: () => postsAPI.getFilteredPosts({
       page: 1,
       limit: 200, // Načteme všechny příspěvky pro měsíc
       startDate: monthStart,
       endDate: monthEnd,
-      ...(selectedNetworkId && { networkId: selectedNetworkId }),
+      ...(selectedNetworkId && { networkId: selectedNetworkId })
     }),
-    select: (response) => response.data,
+    select: (response) => response.data
   });
 
   // Převod příspěvků na kalendářní události
@@ -110,11 +122,11 @@ const CalendarPage: React.FC = () => {
           if (!scheduledTime.actualPostDate) {
             calendarEvents.push({
               postId: post.postId,
-              title: post.contents[0]?.content.substring(0, 50) + '...' || 'Prázdný příspěvek',
+              title: post.contents[0]?.content || 'Prázdný příspěvek',
               type: 'scheduled',
               date: eventDate,
               networkId: scheduledTime.networkId,
-              networkName: networkName,
+              networkName: networkName
             });
           }
         }
@@ -126,11 +138,11 @@ const CalendarPage: React.FC = () => {
 
           calendarEvents.push({
             postId: post.postId,
-            title: post.contents[0]?.content.substring(0, 50) + '...' || 'Prázdný příspěvek',
+            title: post.contents[0]?.content || 'Prázdný příspěvek',
             type: 'posted',
             date: eventDate,
             networkId: scheduledTime.networkId,
-            networkName: networkName,
+            networkName: networkName
           });
         }
       });
@@ -167,7 +179,7 @@ const CalendarPage: React.FC = () => {
       days.push({
         date: new Date(year, month - 1, day),
         isCurrentMonth: false,
-        dayNumber: day,
+        dayNumber: day
       });
     }
 
@@ -176,7 +188,7 @@ const CalendarPage: React.FC = () => {
       days.push({
         date: new Date(year, month, day),
         isCurrentMonth: true,
-        dayNumber: day,
+        dayNumber: day
       });
     }
 
@@ -187,7 +199,7 @@ const CalendarPage: React.FC = () => {
       days.push({
         date: new Date(year, month + 1, day),
         isCurrentMonth: false,
-        dayNumber: day,
+        dayNumber: day
       });
     }
 
@@ -210,7 +222,7 @@ const CalendarPage: React.FC = () => {
 
   const dayNames = ['Po', 'Út', 'St', 'Čt', 'Pá', 'So', 'Ne'];
 
-  if (isLoading) {
+  if (loading) {
     return (
       <Center h="400px">
         <Spinner size="lg" />
@@ -221,7 +233,7 @@ const CalendarPage: React.FC = () => {
   return (
     <Box
       minH="100vh"
-      bg={useColorModeValue('gray.50', 'gray.900')}
+      bg={{ base: "gray.50", _dark: "gray.900" }}
       w="100%"
       maxW="100vw"
       overflow="hidden"
@@ -231,12 +243,12 @@ const CalendarPage: React.FC = () => {
         mx="auto"
         w="100%"
       >
-        <VStack spacing={8} align="stretch" w="100%" px={{ base: 0, md: 0 }}>
+        <VStack gap={8} align="stretch" w="100%" px={{ base: 0, md: 0 }}>
           {/* Header */}
-          <Box bg={useColorModeValue('white', 'gray.800')} p={{ base: 4, md: 6 }} borderRadius="lg" shadow="sm" w="100%" overflow="hidden">
-            <VStack spacing={4} align="stretch" w="100%">
+          <Box bg={{ base: "white", _dark: "gray.800" }} p={{ base: 4, md: 6 }} borderRadius="lg" shadow="sm" w="100%" overflow="hidden">
+            <VStack gap={4} align="stretch" w="100%">
               <VStack
-                spacing={3}
+                gap={3}
                 align="stretch"
                 w="100%"
                 display={{ base: "flex", md: "none" }}
@@ -245,7 +257,7 @@ const CalendarPage: React.FC = () => {
                   Kalendář příspěvků
                 </Heading>
                 <Text
-                  color={useColorModeValue('gray.600', 'gray.400')}
+                  color={{ base: "gray.600", _dark: "gray.400" }}
                   fontSize="md"
                   wordBreak="break-word"
                 >
@@ -253,14 +265,15 @@ const CalendarPage: React.FC = () => {
                 </Text>
 
                 {/* Navigace - Mobile */}
-                <HStack spacing={2} w="100%" justify="center">
+                <HStack gap={2} w="100%" justify="center">
                   <IconButton
                     aria-label="Předchozí měsíc"
-                    icon={<ChevronLeftIcon />}
                     onClick={previousMonth}
                     variant="outline"
                     size="sm"
-                  />
+                  >
+                    <MdChevronLeft />
+                  </IconButton>
                   <Text
                     fontSize="md"
                     fontWeight="semibold"
@@ -272,45 +285,41 @@ const CalendarPage: React.FC = () => {
                   </Text>
                   <IconButton
                     aria-label="Následující měsíc"
-                    icon={<ChevronRightIcon />}
                     onClick={nextMonth}
                     variant="outline"
                     size="sm"
-                  />
+                  >
+                    <MdChevronRight />
+                  </IconButton>
                 </HStack>
 
                 {/* Filtrování podle sítě - Mobile */}
-                <FormControl>
-                  <FormLabel htmlFor="network-filter" fontSize="sm">
+                <VStack align="stretch" gap={2} w="100%">
+                  <Text fontSize="sm" fontWeight="medium">
                     Filtr podle sítě
-                  </FormLabel>
-                  <Select
-                    id="network-filter"
-                    placeholder="Všechny sítě"
-                    value={selectedNetworkId ?? ''}
-                    onChange={(e) => setSelectedNetworkId(e.target.value ? Number(e.target.value) : null)}
-                    bg={useColorModeValue('white', 'gray.700')}
-                    color={useColorModeValue('black', 'white')}
-                    size="sm"
-                    _focus={{
-                      borderColor: useColorModeValue('blue.500', 'blue.300'),
-                      boxShadow: useColorModeValue('0 0 0 1px blue.500', '0 0 0 1px blue.300'),
+                  </Text>
+                  <SelectRoot
+                    collection={networksCollection}
+                    value={selectedNetworkId ? [selectedNetworkId.toString()] : [""]}
+                    onValueChange={({ value }) => {
+                      const networkId = value[0] ? Number(value[0]) : null;
+                      setSelectedNetworkId(networkId);
                     }}
                   >
-                    {networksData?.map((network: any) => (
-                      <option
-                        key={network.networkId}
-                        value={network.networkId}
-                        style={{
-                          backgroundColor: useColorModeValue('#ffffff', '#2D3748'),
-                          color: useColorModeValue('#000000', '#ffffff')
-                        }}
-                      >
-                        {network.networkName}
-                      </option>
-                    ))}
-                  </Select>
-                </FormControl>
+                    <SelectTrigger>
+                      <SelectValueText placeholder="Všechny sítě" />
+                    </SelectTrigger>
+                    <SelectPositioner>
+                      <SelectContent>
+                        {networksCollection.items.map((item) => (
+                          <SelectItem item={item} key={item.value}>
+                            {item.label}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </SelectPositioner>
+                  </SelectRoot>
+                </VStack>
               </VStack>
 
               <HStack
@@ -321,12 +330,12 @@ const CalendarPage: React.FC = () => {
                 flexWrap="wrap"
                 gap={4}
               >
-                <VStack align="start" spacing={2}>
+                <VStack align="start" gap={2}>
                   <Heading size="xl" wordBreak="break-word">
                     Kalendář příspěvků
                   </Heading>
                   <Text
-                    color={useColorModeValue('gray.600', 'gray.400')}
+                    color={{ base: "gray.600", _dark: "gray.400" }}
                     fontSize="lg"
                     wordBreak="break-word"
                   >
@@ -334,16 +343,17 @@ const CalendarPage: React.FC = () => {
                   </Text>
                 </VStack>
 
-                <VStack align="end" spacing={3}>
+                <VStack align="end" gap={3}>
                   {/* Navigace - Desktop */}
-                  <HStack spacing={4}>
+                  <HStack gap={4}>
                     <IconButton
                       aria-label="Předchozí měsíc"
-                      icon={<ChevronLeftIcon />}
                       onClick={previousMonth}
                       variant="outline"
                       size="md"
-                    />
+                    >
+                      <MdChevronLeft />
+                    </IconButton>
                     <Text
                       fontSize="lg"
                       fontWeight="semibold"
@@ -354,52 +364,48 @@ const CalendarPage: React.FC = () => {
                     </Text>
                     <IconButton
                       aria-label="Následující měsíc"
-                      icon={<ChevronRightIcon />}
                       onClick={nextMonth}
                       variant="outline"
                       size="md"
-                    />
+                    >
+                      <MdChevronRight />
+                    </IconButton>
                   </HStack>
 
                   {/* Filtrování podle sítě - Desktop */}
-                  <FormControl maxW="300px">
-                    <FormLabel htmlFor="network-filter-desktop" fontSize="sm">
+                  <VStack align="stretch" gap={2} maxW="300px" w="100%">
+                    <Text fontSize="sm" fontWeight="medium">
                       Filtr podle sítě
-                    </FormLabel>
-                    <Select
-                      id="network-filter-desktop"
-                      placeholder="Všechny sítě"
-                      value={selectedNetworkId ?? ''}
-                      onChange={(e) => setSelectedNetworkId(e.target.value ? Number(e.target.value) : null)}
-                      bg={useColorModeValue('white', 'gray.700')}
-                      color={useColorModeValue('black', 'white')}
-                      size="md"
-                      _focus={{
-                        borderColor: useColorModeValue('blue.500', 'blue.300'),
-                        boxShadow: useColorModeValue('0 0 0 1px blue.500', '0 0 0 1px blue.300'),
+                    </Text>
+                    <SelectRoot
+                      collection={networksCollection}
+                      value={selectedNetworkId ? [selectedNetworkId.toString()] : [""]}
+                      onValueChange={({ value }) => {
+                        const networkId = value[0] ? Number(value[0]) : null;
+                        setSelectedNetworkId(networkId);
                       }}
                     >
-                      {networksData?.map((network: any) => (
-                        <option
-                          key={network.networkId}
-                          value={network.networkId}
-                          style={{
-                            backgroundColor: useColorModeValue('#ffffff', '#2D3748'),
-                            color: useColorModeValue('#000000', '#ffffff')
-                          }}
-                        >
-                          {network.networkName}
-                        </option>
-                      ))}
-                    </Select>
-                  </FormControl>
+                      <SelectTrigger>
+                        <SelectValueText placeholder="Všechny sítě" />
+                      </SelectTrigger>
+                      <SelectPositioner>
+                        <SelectContent>
+                          {networksCollection.items.map((item) => (
+                            <SelectItem item={item} key={item.value}>
+                              {item.label}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </SelectPositioner>
+                    </SelectRoot>
+                  </VStack>
                 </VStack>
               </HStack>
             </VStack>
           </Box>
 
           {/* Calendar Grid */}
-          <Box bg={useColorModeValue('white', 'gray.800')} p={{ base: 4, md: 6 }} borderRadius="lg" shadow="sm" w="100%" overflow="hidden">
+          <Box bg={{ base: "white", _dark: "gray.800" }} p={{ base: 4, md: 6 }} borderRadius="lg" shadow="sm" w="100%" overflow="hidden">
             {/* Kontejner s horizontálním scrollováním POUZE pro kalendář */}
             <Box
               overflowX="auto"
@@ -407,24 +413,24 @@ const CalendarPage: React.FC = () => {
               w="100%"
               css={{
                 '&::-webkit-scrollbar': {
-                  height: '8px',
+                  height: '8px'
                 },
                 '&::-webkit-scrollbar-track': {
-                  background: useColorModeValue('#f1f1f1', '#2d3748'),
+                  background: { base: "#f1f1f1", _dark: "#2d3748" }
                 },
                 '&::-webkit-scrollbar-thumb': {
-                  background: useColorModeValue('#c1c1c1', '#4a5568'),
-                  borderRadius: '4px',
+                  background: { base: "#c1c1c1", _dark: "#4a5568" },
+                  borderRadius: '4px'
                 },
                 '&::-webkit-scrollbar-thumb:hover': {
-                  background: useColorModeValue('#a1a1a1', '#5a6578'),
-                },
+                  background: { base: "#a1a1a1", _dark: "#5a6578" }
+                }
               }}
             >
               {/* Kalendářní obsah s minimální šířkou pro mobil */}
               <Box minW={{ base: "700px", md: "100%" }}>
                 {/* Hlavička s dny v týdnu */}
-                <Grid templateColumns="repeat(7, 1fr)" borderBottom="1px" borderColor={borderColor} mb={0}>
+                <Grid templateColumns="repeat(7, 1fr)" borderBottom="1px" borderColor={{ base: "gray.200", _dark: "gray.600" }} mb={0}>
                   {dayNames.map((day) => (
                     <Box
                       key={day}
@@ -451,13 +457,13 @@ const CalendarPage: React.FC = () => {
                         h={{ base: "100px", md: "120px" }}
                         borderRight="1px"
                         borderBottom="1px"
-                        borderColor={borderColor}
-                        bg={isToday ? todayBg : 'transparent'}
+                        borderColor={{ base: "gray.200", _dark: "gray.600" }}
+                        bg={isToday ? { base: "blue.50", _dark: "blue.900" } : 'transparent'}
                         opacity={day.isCurrentMonth ? 1 : 0.4}
                         p={{ base: 1, md: 2 }}
                         minW="91px"
                       >
-                        <VStack spacing={1} align="stretch" h="full">
+                        <VStack gap={1} align="stretch" h="full">
                           <Text
                             fontSize={{ base: "xs", md: "sm" }}
                             fontWeight={isToday ? 'bold' : 'normal'}
@@ -465,45 +471,41 @@ const CalendarPage: React.FC = () => {
                             {day.dayNumber}
                           </Text>
 
-                          <VStack spacing={1} align="stretch" flex={1} overflowY="auto">
-                            {dayEvents.slice(0, 2).map((event, eventIndex) => (
-                              <VStack key={eventIndex} spacing={1} align="stretch">
-                                <Tooltip
-                                  label={`${event.title} - ${event.networkName} (${event.type === 'scheduled' ? 'Naplánováno' : 'Odesláno'})`}
-                                  hasArrow
-                                >
-                                  <Badge
-                                    size={{ base: "xs", md: "sm" }}
-                                    colorScheme={event.type === 'scheduled' ? 'yellow' : 'green'}
-                                    cursor="pointer"
-                                    onClick={() => navigate(`/posts/${event.postId}`)}
-                                    _hover={{ transform: 'scale(1.05)' }}
-                                    transition="transform 0.1s"
-                                    fontSize="xs"
+                          <VStack gap={1} align="stretch" flex={1} overflowY="auto">
+                            {dayEvents.slice(0, 3).map((event, eventIndex) => (
+                              <Tooltip.Root key={eventIndex}>
+                                <Tooltip.Trigger asChild>
+                                  <Box
+                                    bg={event.type === 'scheduled' ? 'yellow.100' : 'green.100'}
+                                    _dark={{ bg: event.type === 'scheduled' ? 'yellow.900' : 'green.900' }}
                                     p={1}
-                                    borderRadius="md"
-                                    isTruncated
-                                    maxW="100%"
+                                    borderRadius="sm"
+                                    fontSize="xs"
+                                    onClick={() => navigate(`/posts/${event.postId}`)}
+                                    cursor="pointer"
+                                    overflow="hidden"
+                                    borderLeftWidth="3px"
+                                    borderLeftColor={event.type === 'scheduled' ? 'yellow.500' : 'green.500'}
+                                    _hover={{ opacity: 0.8 }}
                                   >
-                                    {event.title.substring(0, 8)}...
-                                  </Badge>
-                                </Tooltip>
-                                <Badge
-                                  size="xs"
-                                  colorScheme="blue"
-                                  fontSize="xs"
-                                  borderRadius="md"
-                                  textAlign="center"
-                                  isTruncated
-                                  maxW="100%"
-                                >
-                                  {event.networkName.substring(0, 6)}
-                                </Badge>
-                              </VStack>
+                                    <Text fontWeight="bold" truncate fontSize="10px">
+                                      {event.title.substring(0, 20)}
+                                    </Text>
+                                    <Text fontSize="10px" color="gray.600" _dark={{ color: "gray.400" }} truncate>
+                                      {event.networkName}
+                                    </Text>
+                                  </Box>
+                                </Tooltip.Trigger>
+                                <Tooltip.Positioner>
+                                  <Tooltip.Content>
+                                    {`${event.title} - ${event.networkName} (${event.type === 'scheduled' ? 'Naplánováno' : 'Odesláno'})`}
+                                  </Tooltip.Content>
+                                </Tooltip.Positioner>
+                              </Tooltip.Root>
                             ))}
-                            {dayEvents.length > 2 && (
+                            {dayEvents.length > 3 && (
                               <Text fontSize="xs" color="gray.500" textAlign="center">
-                                +{dayEvents.length - 2} další
+                                +{dayEvents.length - 3} další
                               </Text>
                             )}
                           </VStack>
@@ -517,12 +519,12 @@ const CalendarPage: React.FC = () => {
           </Box>
 
           {/* Legenda pod kalendářem */}
-          <HStack spacing={4} fontSize="sm" justify="center" pb={4}>
-            <HStack spacing={2}>
+          <HStack gap={4} fontSize="sm" justify="center" pb={4}>
+            <HStack gap={2}>
               <Box w={3} h={3} bg="yellow.400" borderRadius="sm" />
               <Text>Naplánované</Text>
             </HStack>
-            <HStack spacing={2}>
+            <HStack gap={2}>
               <Box w={3} h={3} bg="green.400" borderRadius="sm" />
               <Text>Odeslané</Text>
             </HStack>

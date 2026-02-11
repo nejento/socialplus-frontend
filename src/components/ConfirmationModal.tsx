@@ -1,75 +1,82 @@
 import React from 'react';
 import {
-  Modal,
-  ModalOverlay,
-  ModalContent,
-  ModalHeader,
-  ModalBody,
-  ModalCloseButton,
-  ModalFooter,
+  DialogRoot,
+  DialogBackdrop,
+  DialogContent,
+  DialogPositioner,
+  DialogHeader,
+  DialogBody,
+  DialogCloseTrigger,
+  DialogFooter,
   Button,
-  Text,
-  Alert,
-  AlertIcon,
-
+  Text
 } from '@chakra-ui/react';
 
 interface ConfirmationModalProps {
-  isOpen: boolean;
+  open: boolean;
   onClose: () => void;
   title: string;
   message: string;
   confirmText?: string;
   cancelText?: string;
   onConfirm: () => void;
-  isLoading?: boolean;
-  colorScheme?: string;
+  loading?: boolean;
+  colorPalette?: string;
 }
 
 const ConfirmationModal: React.FC<ConfirmationModalProps> = ({
-  isOpen,
+  open,
   onClose,
   title,
   message,
   confirmText = 'Potvrdit',
   cancelText = 'Zrušit',
   onConfirm,
-  isLoading = false,
-  colorScheme = 'blue',
+  loading = false,
+  colorPalette = 'red'
 }) => {
   const handleConfirm = () => {
     onConfirm();
   };
 
   return (
-    <Modal isOpen={isOpen} onClose={onClose} size="md">
-      <ModalOverlay />
-      <ModalContent>
-        <ModalHeader>{title}</ModalHeader>
-        <ModalCloseButton />
+    <DialogRoot open={open} onOpenChange={({ open }) => !open && onClose()}>
+      <DialogBackdrop />
+      <DialogPositioner>
+        <DialogContent>
+          <DialogHeader>
+            <Text fontSize="lg" fontWeight="bold">
+              {title}
+            </Text>
+          </DialogHeader>
 
-        <ModalBody>
-          <Alert status={colorScheme === 'red' ? 'warning' : 'info'} borderRadius="md" mb={4}>
-            <AlertIcon />
-            <Text fontSize="sm">{message}</Text>
-          </Alert>
-        </ModalBody>
+          <DialogCloseTrigger />
 
-        <ModalFooter>
-          <Button variant="ghost" mr={3} onClick={onClose} isDisabled={isLoading}>
-            {cancelText}
-          </Button>
-          <Button
-            colorScheme={colorScheme}
-            onClick={handleConfirm}
-            isLoading={isLoading}
-            loadingText="Zpracovávám..."
-          >
-            {confirmText}
-          </Button>
-        </ModalFooter>
-      </ModalContent>
-    </Modal>
+          <DialogBody>
+            <Text>
+              {message}
+            </Text>
+          </DialogBody>
+
+          <DialogFooter gap={3}>
+            <Button
+              variant="outline"
+              onClick={onClose}
+              disabled={loading}
+            >
+              {cancelText}
+            </Button>
+            <Button
+              colorPalette={colorPalette}
+              onClick={handleConfirm}
+              loading={loading}
+            >
+              {confirmText}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </DialogPositioner>
+    </DialogRoot>
   );
 };
 
