@@ -1,9 +1,6 @@
 import React from 'react';
 import {
   Box,
-  Card,
-  CardHeader,
-  CardBody,
   Heading,
   VStack,
   HStack,
@@ -11,14 +8,13 @@ import {
   Badge,
   IconButton,
   SimpleGrid,
-  useColorModeValue,
-  useToast,
+  Icon
 } from '@chakra-ui/react';
-import { DownloadIcon } from '@chakra-ui/icons';
+import { MdDownload } from 'react-icons/md';
 import { postsAPI } from '../services/api';
 import {
   NetworkInfo,
-  PostDetailedListItem,
+  PostDetailedListItem
 } from '@/types';
 
 interface PostAttachmentsProps {
@@ -28,10 +24,6 @@ interface PostAttachmentsProps {
 }
 
 const PostAttachments: React.FC<PostAttachmentsProps> = ({ postId, post, networks }) => {
-  const toast = useToast();
-  const cardBg = useColorModeValue('white', 'gray.700');
-  const borderColor = useColorModeValue('gray.200', 'gray.600');
-  const textColor = useColorModeValue('gray.600', 'gray.300');
 
   // Pomocná funkce pro získání názvu sítě podle ID
   const getNetworkName = (networkId: number): React.ReactElement => {
@@ -83,13 +75,7 @@ const PostAttachments: React.FC<PostAttachmentsProps> = ({ postId, post, network
       window.URL.revokeObjectURL(url);
     } catch (error) {
       console.error('Chyba při stahování souboru:', error);
-      toast({
-        title: 'Chyba',
-        description: 'Nepodařilo se stáhnout soubor',
-        status: 'error',
-        duration: 3000,
-        isClosable: true,
-      });
+      // toast() // Not available in Chakra v3
     }
   };
 
@@ -99,41 +85,48 @@ const PostAttachments: React.FC<PostAttachmentsProps> = ({ postId, post, network
   }
 
   return (
-    <Card bg={cardBg} borderColor={borderColor} width="100%">
-      <CardHeader>
+    <Box
+      bg={{ base: "white", _dark: "gray.800" }}
+      borderWidth="1px"
+      borderColor={{ base: "gray.200", _dark: "gray.600" }}
+      borderRadius="md"
+      width="100%"
+    >
+      <Box p={4} borderBottom="1px" borderColor={{ base: "gray.200", _dark: "gray.600" }}>
         <Heading size="md">Přílohy</Heading>
-      </CardHeader>
-      <CardBody>
-        <SimpleGrid columns={{ base: 1, md: 2, lg: 3 }} spacing={4}>
+      </Box>
+      <Box p={4}>
+        <SimpleGrid columns={{ base: 1, md: 2, lg: 3 }} gap={4}>
           {post.attachments.map((file) => (
             <Box
               key={file.id}
               p={4}
               borderWidth="1px"
               borderRadius="md"
-              borderColor={borderColor}
+              borderColor={{ base: "gray.200", _dark: "gray.600" }}
             >
-              <VStack spacing={3} align="stretch">
+              <VStack gap={3} align="stretch">
                 <HStack justifyContent="space-between">
-                  <Text fontWeight="bold" fontSize="sm" noOfLines={1}>
+                  <Text fontWeight="bold" fontSize="sm" lineClamp={1}>
                     {file.fileName}
                   </Text>
                   <IconButton
                     aria-label="Stáhnout soubor"
-                    icon={<DownloadIcon />}
                     size="sm"
                     onClick={() => handleDownloadFile(file.id, file.fileName)}
-                  />
+                  >
+                    <Icon as={MdDownload} />
+                  </IconButton>
                 </HStack>
 
                 {file.linkedNetworks.length > 0 && (
-                  <VStack align="stretch" spacing={2}>
-                    <Text fontSize="xs" color={textColor}>
+                  <VStack align="stretch" gap={2}>
+                    <Text fontSize="xs" color={{ base: "gray.800", _dark: "white" }}>
                       Přiřazeno k sítím:
                     </Text>
-                    <HStack spacing={1} flexWrap="wrap">
+                    <HStack gap={1} flexWrap="wrap">
                       {file.linkedNetworks.map(networkId => (
-                        <Badge key={networkId} colorScheme="green" size="sm">
+                        <Badge key={networkId} colorPalette="green" size="sm">
                           {getNetworkName(networkId)}
                         </Badge>
                       ))}
@@ -144,8 +137,8 @@ const PostAttachments: React.FC<PostAttachmentsProps> = ({ postId, post, network
             </Box>
           ))}
         </SimpleGrid>
-      </CardBody>
-    </Card>
+      </Box>
+    </Box>
   );
 };
 

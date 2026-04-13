@@ -5,16 +5,12 @@ import {
   Text,
   VStack,
   Heading,
-  useColorModeValue,
   Button,
   Spinner,
-  Alert,
-  AlertIcon,
   HStack,
   Tooltip
 } from '@chakra-ui/react';
 import { useNavigate } from 'react-router';
-import { AddIcon } from '@chakra-ui/icons';
 import { postsAPI, networkAPI, monitorAPI } from '../services/api';
 import { PostDetailedListItem, PostDetailedListResponse, OwnedNetwork, MonitorStats } from '@/types';
 import PostCard from '../components/PostCard';
@@ -30,8 +26,6 @@ const HomePage: React.FC = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
 
-  const bgColor = useColorModeValue('gray.50', 'gray.900');
-  const cardBg = useColorModeValue('white', 'gray.800');
 
   useEffect(() => {
     loadRecentPosts();
@@ -117,7 +111,7 @@ const HomePage: React.FC = () => {
       navigate(`/posts/edit/${postId}`);
     } catch (error) {
       console.error('Chyba při vytváření nového příspěvku:', error);
-      setError('Nepodařilo se vytvořit nový přísp��vek');
+      setError('Nepodařilo se vytvořit nový příspěvek');
     } finally {
       setCreatingPost(false);
     }
@@ -135,7 +129,7 @@ const HomePage: React.FC = () => {
   if (loading) {
     return (
       <Box display="flex" justifyContent="center" alignItems="center" minH="400px">
-        <VStack spacing={4}>
+        <VStack gap={4}>
           <Spinner size="xl" color="blue.500" />
           <Text>Načítání...</Text>
         </VStack>
@@ -146,7 +140,7 @@ const HomePage: React.FC = () => {
   return (
     <Box
       minH="100vh"
-      bg={bgColor}
+      bg={{ base: "gray.50", _dark: "gray.900" }}
       w="100%"
       maxW="100vw"
       overflow="hidden"
@@ -156,12 +150,12 @@ const HomePage: React.FC = () => {
         mx="auto"
         w="100%"
       >
-        <VStack spacing={8} align="stretch" w="100%" px={{ base: 0, md: 0 }}>
+        <VStack gap={8} align="stretch" w="100%" px={{ base: 0, md: 0 }}>
           {/* Header */}
-          <Box bg={useColorModeValue('white', 'gray.800')} p={{ base: 4, md: 6 }} borderRadius="lg" shadow="sm" w="100%" overflow="hidden">
-            <VStack spacing={4} align="stretch" w="100%">
+          <Box bg={{ base: "white", _dark: "gray.800" }} p={{ base: 4, md: 6 }} borderRadius="lg" shadow="sm" w="100%" overflow="hidden">
+            <VStack gap={4} align="stretch" w="100%">
               <VStack
-                spacing={3}
+                gap={3}
                 align="stretch"
                 w="100%"
                 display={{ base: "flex", md: "none" }}
@@ -171,17 +165,16 @@ const HomePage: React.FC = () => {
                 </Heading>
                 <Text
                   fontSize="md"
-                  color={useColorModeValue('gray.600', 'gray.300')}
+                  color={{ base: "gray.600", _dark: "gray.300" }}
                   wordBreak="break-word"
                 >
                   Spravujte své příspěvky pro sociální sítě na jednom místě
                 </Text>
                 <Button
-                  leftIcon={creatingPost ? <Spinner size="sm" /> : <AddIcon />}
-                  colorScheme="blue"
+                  colorPalette="blue"
                   onClick={handleCreateNew}
                   size="md"
-                  isLoading={creatingPost}
+                  loading={creatingPost}
                   loadingText="Vytváří se..."
                   w="100%"
                 >
@@ -191,7 +184,7 @@ const HomePage: React.FC = () => {
                   variant="outline"
                   onClick={handleViewAllPosts}
                   size="md"
-                  isDisabled={creatingPost}
+                  disabled={creatingPost}
                   w="100%"
                 >
                   Zobrazit všechny příspěvky
@@ -206,25 +199,24 @@ const HomePage: React.FC = () => {
                 flexWrap="wrap"
                 gap={4}
               >
-                <VStack align="start" spacing={2}>
+                <VStack align="start" gap={2}>
                   <Heading size="xl" wordBreak="break-word">
                     Vítejte v SocialPlus
                   </Heading>
                   <Text
                     fontSize="lg"
-                    color={useColorModeValue('gray.600', 'gray.300')}
+                    color={{ base: "gray.600", _dark: "gray.300" }}
                     wordBreak="break-word"
                   >
                     Spravujte své příspěvky pro sociální sítě na jednom místě
                   </Text>
                 </VStack>
-                <HStack spacing={3} flexWrap="wrap">
+                <HStack gap={3} flexWrap="wrap">
                   <Button
-                    leftIcon={creatingPost ? <Spinner size="sm" /> : <AddIcon />}
-                    colorScheme="blue"
+                    colorPalette="blue"
                     onClick={handleCreateNew}
                     size="lg"
-                    isLoading={creatingPost}
+                    loading={creatingPost}
                     loadingText="Vytváří se..."
                   >
                     Vytvořit nový příspěvek
@@ -233,7 +225,7 @@ const HomePage: React.FC = () => {
                     variant="outline"
                     onClick={handleViewAllPosts}
                     size="lg"
-                    isDisabled={creatingPost}
+                    disabled={creatingPost}
                   >
                     Zobrazit všechny příspěvky
                   </Button>
@@ -244,23 +236,23 @@ const HomePage: React.FC = () => {
 
           {/* Recent Posts Section */}
           <Box
-            bg={cardBg}
+            bg={{ base: "white", _dark: "gray.800" }}
             p={{ base: 4, md: 6 }}
             borderRadius="lg"
             shadow="sm"
             w="100%"
             overflow="hidden"
           >
-            <VStack spacing={6} align="stretch" w="100%">
+            <VStack gap={6} align="stretch" w="100%">
               <VStack
-                spacing={2}
+                gap={2}
                 align="stretch"
                 display={{ base: "flex", md: "none" }}
               >
                 <Heading size="md">Nejnovější příspěvky</Heading>
                 <Button
                   variant="ghost"
-                  colorScheme="blue"
+                  colorPalette="blue"
                   onClick={handleViewAllPosts}
                   size="sm"
                   alignSelf="flex-start"
@@ -278,7 +270,7 @@ const HomePage: React.FC = () => {
                 <Heading size="lg">Nejnovější příspěvky</Heading>
                 <Button
                   variant="ghost"
-                  colorScheme="blue"
+                  colorPalette="blue"
                   onClick={handleViewAllPosts}
                   size="sm"
                 >
@@ -287,12 +279,22 @@ const HomePage: React.FC = () => {
               </HStack>
 
               {error && (
-                <Alert status="error" borderRadius="md">
-                  <AlertIcon />
-                  <Text wordBreak="break-word" fontSize={{ base: "sm", md: "md" }}>
-                    {error}
-                  </Text>
-                </Alert>
+                <Box
+                  p={3}
+                  bg={{ base: "red.50", _dark: "red.900" }}
+                  borderRadius="md"
+                  borderWidth="1px"
+                  borderColor={{ base: "red.200", _dark: "red.700" }}
+                >
+                  <VStack align="start" gap={2}>
+                    <Text fontWeight="bold" color={{ base: "red.800", _dark: "red.200" }}>
+                      Chyba
+                    </Text>
+                    <Text fontSize="sm" color={{ base: "red.700", _dark: "red.300" }} wordBreak="break-word">
+                      {error}
+                    </Text>
+                  </VStack>
+                </Box>
               )}
 
               {!error && recentPosts.length === 0 ? (
@@ -302,10 +304,10 @@ const HomePage: React.FC = () => {
                   borderWidth="1px"
                   borderRadius="lg"
                   borderStyle="dashed"
-                  borderColor={useColorModeValue('gray.300', 'gray.600')}
+                  borderColor={{ base: "gray.300", _dark: "gray.600" }}
                   w="100%"
                 >
-                  <VStack spacing={4} px={{ base: 4, md: 0 }}>
+                  <VStack gap={4} px={{ base: 4, md: 0 }}>
                     <Text
                       fontSize={{ base: "md", md: "lg" }}
                       fontWeight="medium"
@@ -314,17 +316,16 @@ const HomePage: React.FC = () => {
                       Zatím nemáte žádné příspěvky
                     </Text>
                     <Text
-                      color={useColorModeValue('gray.600', 'gray.400')}
+                      color={{ base: "gray.600", _dark: "gray.400" }}
                       fontSize={{ base: "sm", md: "md" }}
                       wordBreak="break-word"
                     >
                       Vytvořte svůj první příspěvek pro sociální sítě
                     </Text>
                     <Button
-                      leftIcon={creatingPost ? <Spinner size="sm" /> : <AddIcon />}
-                      colorScheme="blue"
+                      colorPalette="blue"
                       onClick={handleCreateNew}
-                      isLoading={creatingPost}
+                      loading={creatingPost}
                       loadingText="Vytváří se..."
                       size={{ base: "md", md: "lg" }}
                       w={{ base: "100%", md: "auto" }}
@@ -338,7 +339,7 @@ const HomePage: React.FC = () => {
                 <Box w="100%" overflow="hidden">
                   <SimpleGrid
                     columns={{ base: 1, lg: 2, xl: 3 }}
-                    spacing={{ base: 3, md: 4 }}
+                    gap={{ base: 3, md: 4 }}
                     w="100%"
                   >
                     {recentPosts.map((post) => (
@@ -363,202 +364,222 @@ const HomePage: React.FC = () => {
           <Box w="100%" overflow="hidden">
             <SimpleGrid
               columns={{ base: 2, lg: 4 }}
-              spacing={{ base: 3, md: 6 }}
+              gap={{ base: 3, md: 6 }}
               w="100%"
             >
-              <Tooltip
-                label="Příspěvky bez naplánovaného obsahu. Zahrnuje rozepsané příspěvky vlastní i ty, kde jste editor."
-                fontSize="sm"
-                placement="top"
-                hasArrow
+              <Tooltip.Root
+                positioning={{ placement: "top" }}
               >
-                <Box
-                  bg={cardBg}
-                  p={{ base: 3, md: 6 }}
-                  borderRadius="lg"
-                  shadow="sm"
-                  textAlign="center"
-                  cursor="help"
-                  w="100%"
-                  overflow="hidden"
-                >
-                  <VStack spacing={{ base: 1, md: 2 }}>
-                    <Text fontSize={{ base: "2xl", md: "3xl" }} fontWeight="bold" color="orange.500">
-                      📝
-                    </Text>
-                    <Text fontSize={{ base: "xl", md: "2xl" }} fontWeight="bold" color="orange.500">
-                      {stats?.unplannedPosts ?? 0}
-                    </Text>
-                    <Text
-                      color={useColorModeValue('gray.600', 'gray.400')}
-                      fontSize={{ base: "xs", md: "sm" }}
-                      fontWeight="medium"
-                      textAlign="center"
-                      wordBreak="break-word"
-                    >
-                      Neplánované příspěvky
-                    </Text>
-                    <Text
-                      color={useColorModeValue('gray.500', 'gray.500')}
-                      fontSize="xs"
-                      mt={1}
-                      textAlign="center"
-                      wordBreak="break-word"
-                    >
-                      Rozepsané a nevydané
-                    </Text>
-                  </VStack>
-                </Box>
-              </Tooltip>
+                <Tooltip.Trigger asChild>
+                  <Box
+                    bg={{ base: "white", _dark: "gray.800" }}
+                    p={{ base: 3, md: 6 }}
+                    borderRadius="lg"
+                    shadow="sm"
+                    textAlign="center"
+                    cursor="help"
+                    w="100%"
+                    overflow="hidden"
+                  >
+                    <VStack gap={{ base: 1, md: 2 }}>
+                      <Text fontSize={{ base: "2xl", md: "3xl" }} fontWeight="bold" color="orange.500">
+                        📝
+                      </Text>
+                      <Text fontSize={{ base: "xl", md: "2xl" }} fontWeight="bold" color="orange.500">
+                        {stats?.unplannedPosts ?? 0}
+                      </Text>
+                      <Text
+                        color={{ base: "gray.600", _dark: "gray.400" }}
+                        fontSize={{ base: "xs", md: "sm" }}
+                        fontWeight="medium"
+                        textAlign="center"
+                        wordBreak="break-word"
+                      >
+                        Neplánované příspěvky
+                      </Text>
+                      <Text
+                        color={{ base: "gray.500", _dark: "gray.500" }}
+                        fontSize="xs"
+                        mt={1}
+                        textAlign="center"
+                        wordBreak="break-word"
+                      >
+                        Rozepsané a nevydané
+                      </Text>
+                    </VStack>
+                  </Box>
+                </Tooltip.Trigger>
+                <Tooltip.Positioner>
+                  <Tooltip.Content fontSize="sm">
+                    <Tooltip.Arrow />
+                    Příspěvky bez naplánovaného obsahu. Zahrnuje rozepsané příspěvky vlastní i ty, kde jste editor.
+                  </Tooltip.Content>
+                </Tooltip.Positioner>
+              </Tooltip.Root>
 
-              <Tooltip
-                label="Příspěvky s naplánovaným obsahem na sítě, které vlastníte nebo máte k nim write oprávnění."
-                fontSize="sm"
-                placement="top"
-                hasArrow
+              <Tooltip.Root
+                positioning={{ placement: "top" }}
               >
-                <Box
-                  bg={cardBg}
-                  p={{ base: 3, md: 6 }}
-                  borderRadius="lg"
-                  shadow="sm"
-                  textAlign="center"
-                  cursor="help"
-                  w="100%"
-                  overflow="hidden"
-                >
-                  <VStack spacing={{ base: 1, md: 2 }}>
-                    <Text fontSize={{ base: "2xl", md: "3xl" }} fontWeight="bold" color="green.500">
-                      📅
-                    </Text>
-                    <Text fontSize={{ base: "xl", md: "2xl" }} fontWeight="bold" color="green.500">
-                      {stats?.scheduledPosts ?? 0}
-                    </Text>
-                    <Text
-                      color={useColorModeValue('gray.600', 'gray.400')}
-                      fontSize={{ base: "xs", md: "sm" }}
-                      fontWeight="medium"
-                      textAlign="center"
-                      wordBreak="break-word"
-                    >
-                      Naplánované příspěvky
-                    </Text>
-                    <Text
-                      color={useColorModeValue('gray.500', 'gray.500')}
-                      fontSize="xs"
-                      mt={1}
-                      textAlign="center"
-                      wordBreak="break-word"
-                    >
-                      Čekají na odeslání
-                    </Text>
-                  </VStack>
-                </Box>
-              </Tooltip>
+                <Tooltip.Trigger asChild>
+                  <Box
+                    bg={{ base: "white", _dark: "gray.800" }}
+                    p={{ base: 3, md: 6 }}
+                    borderRadius="lg"
+                    shadow="sm"
+                    textAlign="center"
+                    cursor="help"
+                    w="100%"
+                    overflow="hidden"
+                  >
+                    <VStack gap={{ base: 1, md: 2 }}>
+                      <Text fontSize={{ base: "2xl", md: "3xl" }} fontWeight="bold" color="green.500">
+                        📅
+                      </Text>
+                      <Text fontSize={{ base: "xl", md: "2xl" }} fontWeight="bold" color="green.500">
+                        {stats?.scheduledPosts ?? 0}
+                      </Text>
+                      <Text
+                        color={{ base: "gray.600", _dark: "gray.400" }}
+                        fontSize={{ base: "xs", md: "sm" }}
+                        fontWeight="medium"
+                        textAlign="center"
+                        wordBreak="break-word"
+                      >
+                        Naplánované příspěvky
+                      </Text>
+                      <Text
+                        color={{ base: "gray.500", _dark: "gray.500" }}
+                        fontSize="xs"
+                        mt={1}
+                        textAlign="center"
+                        wordBreak="break-word"
+                      >
+                        Čekají na odeslání
+                      </Text>
+                    </VStack>
+                  </Box>
+                </Tooltip.Trigger>
+                <Tooltip.Positioner>
+                  <Tooltip.Content fontSize="sm">
+                    <Tooltip.Arrow />
+                    Příspěvky s naplánovaným obsahem na sítě, které vlastníte nebo máte k nim write oprávnění.
+                  </Tooltip.Content>
+                </Tooltip.Positioner>
+              </Tooltip.Root>
 
-              <Tooltip
-                label="Publikované příspěvky maximálně 7 dní staré, které jsou monitorované pro sběr statistik."
-                fontSize="sm"
-                placement="top"
-                hasArrow
+              <Tooltip.Root
+                positioning={{ placement: "top" }}
               >
-                <Box
-                  bg={cardBg}
-                  p={{ base: 3, md: 6 }}
-                  borderRadius="lg"
-                  shadow="sm"
-                  textAlign="center"
-                  cursor="help"
-                  w="100%"
-                  overflow="hidden"
-                >
-                  <VStack spacing={{ base: 1, md: 2 }}>
-                    <Text fontSize={{ base: "2xl", md: "3xl" }} fontWeight="bold" color="blue.500">
-                      📊
-                    </Text>
-                    <Text fontSize={{ base: "xl", md: "2xl" }} fontWeight="bold" color="blue.500">
-                      {stats?.monitoredPosts ?? 0}
-                    </Text>
-                    <Text
-                      color={useColorModeValue('gray.600', 'gray.400')}
-                      fontSize={{ base: "xs", md: "sm" }}
-                      fontWeight="medium"
-                      textAlign="center"
-                      wordBreak="break-word"
-                    >
-                      Monitorované příspěvky
-                    </Text>
-                    <Text
-                      color={useColorModeValue('gray.500', 'gray.500')}
-                      fontSize="xs"
-                      mt={1}
-                      textAlign="center"
-                      wordBreak="break-word"
-                    >
-                      Sledování výkonu
-                    </Text>
-                  </VStack>
-                </Box>
-              </Tooltip>
+                <Tooltip.Trigger asChild>
+                  <Box
+                    bg={{ base: "white", _dark: "gray.800" }}
+                    p={{ base: 3, md: 6 }}
+                    borderRadius="lg"
+                    shadow="sm"
+                    textAlign="center"
+                    cursor="help"
+                    w="100%"
+                    overflow="hidden"
+                  >
+                    <VStack gap={{ base: 1, md: 2 }}>
+                      <Text fontSize={{ base: "2xl", md: "3xl" }} fontWeight="bold" color="blue.500">
+                        📊
+                      </Text>
+                      <Text fontSize={{ base: "xl", md: "2xl" }} fontWeight="bold" color="blue.500">
+                        {stats?.monitoredPosts ?? 0}
+                      </Text>
+                      <Text
+                        color={{ base: "gray.600", _dark: "gray.400" }}
+                        fontSize={{ base: "xs", md: "sm" }}
+                        fontWeight="medium"
+                        textAlign="center"
+                        wordBreak="break-word"
+                      >
+                        Monitorované příspěvky
+                      </Text>
+                      <Text
+                        color={{ base: "gray.500", _dark: "gray.500" }}
+                        fontSize="xs"
+                        mt={1}
+                        textAlign="center"
+                        wordBreak="break-word"
+                      >
+                        Sledování výkonu
+                      </Text>
+                    </VStack>
+                  </Box>
+                </Tooltip.Trigger>
+                <Tooltip.Positioner>
+                  <Tooltip.Content fontSize="sm">
+                    <Tooltip.Arrow />
+                    Publikované příspěvky maximálně 7 dní staré, které jsou monitorované pro sběr statistik.
+                  </Tooltip.Content>
+                </Tooltip.Positioner>
+              </Tooltip.Root>
 
-              <Tooltip
-                label="Nejbližší datum odeslání naplánovaného příspěvku. Zahrnuje sítě s read i write oprávněním."
-                fontSize="sm"
-                placement="top"
-                hasArrow
+              <Tooltip.Root
+                positioning={{ placement: "top" }}
               >
-                <Box
-                  bg={cardBg}
-                  p={{ base: 3, md: 6 }}
-                  borderRadius="lg"
-                  shadow="sm"
-                  textAlign="center"
-                  cursor="help"
-                  w="100%"
-                  overflow="hidden"
-                >
-                  <VStack spacing={{ base: 1, md: 2 }}>
-                    <Text fontSize={{ base: "2xl", md: "3xl" }} fontWeight="bold" color="purple.500">
-                      ⏰
-                    </Text>
-                    <Text
-                      fontSize={{ base: "sm", md: "lg" }}
-                      fontWeight="bold"
-                      color="purple.500"
-                      wordBreak="break-word"
-                      textAlign="center"
-                    >
-                      {stats?.nextScheduledDate
-                        ? new Date(stats.nextScheduledDate).toLocaleDateString('cs-CZ', {
-                            day: '2-digit',
-                            month: '2-digit',
-                            hour: '2-digit',
-                            minute: '2-digit'
-                          })
-                        : 'Žádný'
-                      }
-                    </Text>
-                    <Text
-                      color={useColorModeValue('gray.600', 'gray.400')}
-                      fontSize={{ base: "xs", md: "sm" }}
-                      fontWeight="medium"
-                      textAlign="center"
-                      wordBreak="break-word"
-                    >
-                      Další naplánovaný
-                    </Text>
-                    <Text
-                      color={useColorModeValue('gray.500', 'gray.500')}
-                      fontSize="xs"
-                      mt={1}
-                      textAlign="center"
-                      wordBreak="break-word"
-                    >
-                      {stats?.nextScheduledDate ? 'Datum a čas' : 'Žádný plán'}
-                    </Text>
-                  </VStack>
-                </Box>
-              </Tooltip>
+                <Tooltip.Trigger asChild>
+                  <Box
+                    bg={{ base: "white", _dark: "gray.800" }}
+                    p={{ base: 3, md: 6 }}
+                    borderRadius="lg"
+                    shadow="sm"
+                    textAlign="center"
+                    cursor="help"
+                    w="100%"
+                    overflow="hidden"
+                  >
+                    <VStack gap={{ base: 1, md: 2 }}>
+                      <Text fontSize={{ base: "2xl", md: "3xl" }} fontWeight="bold" color="purple.500">
+                        ⏰
+                      </Text>
+                      <Text
+                        fontSize={{ base: "sm", md: "lg" }}
+                        fontWeight="bold"
+                        color="purple.500"
+                        wordBreak="break-word"
+                        textAlign="center"
+                      >
+                        {stats?.nextScheduledDate
+                          ? new Date(stats.nextScheduledDate).toLocaleDateString('cs-CZ', {
+                              day: '2-digit',
+                              month: '2-digit',
+                              hour: '2-digit',
+                              minute: '2-digit'
+                            })
+                          : 'Žádný'
+                        }
+                      </Text>
+                      <Text
+                        color={{ base: "gray.600", _dark: "gray.400" }}
+                        fontSize={{ base: "xs", md: "sm" }}
+                        fontWeight="medium"
+                        textAlign="center"
+                        wordBreak="break-word"
+                      >
+                        Další naplánovaný
+                      </Text>
+                      <Text
+                        color={{ base: "gray.500", _dark: "gray.500" }}
+                        fontSize="xs"
+                        mt={1}
+                        textAlign="center"
+                        wordBreak="break-word"
+                      >
+                        {stats?.nextScheduledDate ? 'Datum a čas' : 'Žádný plán'}
+                      </Text>
+                    </VStack>
+                  </Box>
+                </Tooltip.Trigger>
+                <Tooltip.Positioner>
+                  <Tooltip.Content fontSize="sm">
+                    <Tooltip.Arrow />
+                    Nejbližší datum odeslání naplánovaného příspěvku. Zahrnuje sítě s read i write oprávnění.
+                  </Tooltip.Content>
+                </Tooltip.Positioner>
+              </Tooltip.Root>
             </SimpleGrid>
           </Box>
         </VStack>

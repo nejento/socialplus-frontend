@@ -4,23 +4,42 @@ import {
   VStack,
   HStack,
   Text,
-  useColorModeValue,
   Spinner,
   IconButton,
   Badge,
-  Tag,
-  TagLabel,
   Wrap,
   WrapItem,
-  Tooltip,
+  Icon
 } from '@chakra-ui/react';
 import { useNavigate } from 'react-router';
-import { EditIcon, ViewIcon, DeleteIcon, AttachmentIcon } from '@chakra-ui/icons';
-import { PostDetailedListItem, PostCardData, PostCardPermissions } from '@/types';
+import { MdEdit, MdVisibility, MdDelete, MdAttachFile } from 'react-icons/md';
+import { PostDetailedListItem, PostCardPermissions } from '@/types';
 import { useDeletePost } from '../hooks/useDeletePost';
 import DeletePostModal from './DeletePostModal';
 
-interface PostCardProps {
+// Pomocné typy
+interface PostData {
+  postId: number;
+  creator: { id: number; username: string };
+  createdAt: string;
+  firstContent?: string;
+  contents?: Array<{
+    contentId: number;
+    content: string;
+    postDate: string;
+    actualPostDate: string;
+    networkPostId: string;
+  }>;
+  attachments?: any[];
+  status?: string;
+}
+
+interface PostPermissions {
+  canEdit: boolean;
+  canDelete: boolean;
+}
+
+interface PostProps {
   post: PostDetailedListItem;
   isContentLoading?: boolean;
   onPostDeleted?: (postId: number) => void;
@@ -28,10 +47,10 @@ interface PostCardProps {
   permissions?: PostCardPermissions;
   networkName?: string;
   currentUserId?: number;
-  networksMap?: Map<number, string>; // Mapování networkId na název sítě
+  networksMap?: Map<number, string>;
 }
 
-const PostCard: React.FC<PostCardProps> = ({
+const Post: React.FC<PostProps> = ({
   post, 
   isContentLoading = false, 
   onPostDeleted, 
@@ -41,15 +60,10 @@ const PostCard: React.FC<PostCardProps> = ({
   currentUserId,
   networksMap
 }) => {
-  const cardBg = useColorModeValue('white', 'gray.700');
-  const borderColor = useColorModeValue('gray.200', 'gray.600');
-  const textColor = useColorModeValue('gray.600', 'gray.300');
-  const contentBg = useColorModeValue('gray.50', 'gray.600');
-  const mutedColor = useColorModeValue('gray.500', 'gray.400');
   const navigate = useNavigate();
 
   // Normalizace dat - převedeme PostDetailedListItem na jednotné rozhraní
-  const normalizePostData = (post: PostDetailedListItem): PostCardData => {
+  const normalizePostData = (post: PostDetailedListItem): PostData => {
     // PostDetailedListItem - detailní typ s objektem creator
     return {
       postId: post.postId,
@@ -70,7 +84,7 @@ const PostCard: React.FC<PostCardProps> = ({
   const postData = normalizePostData(post);
 
   // Logika oprávnění - pokud nejsou předána explicitní oprávnění, odvodíme je
-  const getPermissions = (): PostCardPermissions => {
+  const getPermissions = (): PostPermissions => {
     if (permissions) {
       return permissions;
     }
@@ -142,8 +156,7 @@ const PostCard: React.FC<PostCardProps> = ({
     deleteModal,
     openDeleteModal,
     closeDeleteModal,
-    confirmDelete,
-  } = useDeletePost({
+    confirmDelete } = useDeletePost({
     onSuccess: onPostDeleted,
     showModal: showDeleteModal
   });
@@ -173,13 +186,12 @@ const PostCard: React.FC<PostCardProps> = ({
         draft: { colorScheme: 'gray', label: 'Koncept' },
         published: { colorScheme: 'green', label: 'Publikováno' },
         scheduled: { colorScheme: 'blue', label: 'Naplánováno' },
-        unpublished: { colorScheme: 'red', label: 'Nevydáno' },
-      };
+        unpublished: { colorScheme: 'red', label: 'Nevydáno' } };
 
       const statusInfo = statusMap[postData.status] || { colorScheme: 'gray', label: postData.status };
 
       return (
-        <Badge colorScheme={statusInfo.colorScheme} variant="subtle">
+        <Badge colorPalette={statusInfo.colorScheme} variant="subtle">
           {statusInfo.label}
         </Badge>
       );
@@ -190,10 +202,10 @@ const PostCard: React.FC<PostCardProps> = ({
   const getContentPreview = () => {
     if (isContentLoading) {
       return (
-        <Box p={3} bg={contentBg} borderRadius="md">
-          <HStack spacing={2}>
+        <Box p={3} bg={{ base: "gray.50", _dark: "gray.600" }} borderRadius="md">
+          <HStack gap={2}>
             <Spinner size="sm" />
-            <Text fontSize="sm" color={mutedColor}>
+            <Text fontSize="sm" color={{ base: "gray.500", _dark: "gray.400" }}>
               Načítání obsahu...
             </Text>
           </HStack>
@@ -207,7 +219,7 @@ const PostCard: React.FC<PostCardProps> = ({
         : postData.firstContent;
 
       return (
-        <Box p={3} bg={contentBg} borderRadius="md">
+        <Box p={3} bg={{ base: "gray.50", _dark: "gray.600" }} borderRadius="md">
           <Text fontSize="sm" whiteSpace="pre-wrap">
             {preview}
           </Text>
@@ -222,7 +234,7 @@ const PostCard: React.FC<PostCardProps> = ({
         : firstContent;
 
       return (
-        <Box p={3} bg={contentBg} borderRadius="md">
+        <Box p={3} bg={{ base: "gray.50", _dark: "gray.600" }} borderRadius="md">
           <Text fontSize="sm" whiteSpace="pre-wrap">
             {preview}
           </Text>
@@ -231,8 +243,8 @@ const PostCard: React.FC<PostCardProps> = ({
     }
 
     return (
-      <Box p={3} bg={contentBg} borderRadius="md">
-        <Text fontSize="sm" color={mutedColor} fontStyle="italic">
+      <Box p={3} bg={{ base: "gray.50", _dark: "gray.600" }} borderRadius="md">
+        <Text fontSize="sm" color={{ base: "gray.500", _dark: "gray.400" }} fontStyle="italic">
           Zatím bez obsahu
         </Text>
       </Box>
@@ -263,15 +275,15 @@ const PostCard: React.FC<PostCardProps> = ({
 
       if (networkIds.size > 0) {
         return (
-          <Wrap spacing={1}>
+          <Wrap gap={1}>
             {Array.from(networkIds).map(networkId => {
               // Použijeme networksMap pro získání názvu sítě
               const networkName = networksMap?.get(networkId) || `Síť ${networkId}`;
               return (
                 <WrapItem key={networkId}>
-                  <Tag size="sm" colorScheme="blue" variant="subtle">
-                    <TagLabel>{networkName}</TagLabel>
-                  </Tag>
+                  <Badge size="sm" colorPalette="blue" variant="subtle">
+                    {networkName}
+                  </Badge>
                 </WrapItem>
               );
             })}
@@ -283,9 +295,9 @@ const PostCard: React.FC<PostCardProps> = ({
     // Pro NetworkPostItem zobrazíme název sítě
     if (networkName) {
       return (
-        <Tag size="sm" colorScheme="green" variant="subtle">
-          <TagLabel>{networkName}</TagLabel>
-        </Tag>
+        <Badge size="sm" colorPalette="green" variant="subtle">
+          {networkName}
+        </Badge>
       );
     }
 
@@ -295,23 +307,23 @@ const PostCard: React.FC<PostCardProps> = ({
   return (
     <>
       <Box
-        bg={cardBg}
+        bg={{ base: "white", _dark: "gray.800" }}
         borderWidth="1px"
-        borderColor={borderColor}
+        borderColor={{ base: "gray.200", _dark: "gray.600" }}
         borderRadius="lg"
         p={4}
         shadow="sm"
         transition="all 0.2s"
         _hover={{
-          bg: useColorModeValue('gray.50', 'gray.650'),
-          borderColor: useColorModeValue('gray.300', 'gray.500'),
-          shadow: 'md',
+          bg: { base: "gray.50", _dark: "gray.700" },
+          borderColor: { base: "gray.300", _dark: "gray.500" },
+          shadow: 'md'
         }}
       >
-        <VStack spacing={4} align="stretch">
+        <VStack gap={4} align="stretch">
           {/* Header s ID příspěvku a statusem */}
           <HStack justifyContent="space-between" align="start">
-            <VStack align="start" spacing={1}>
+            <VStack align="start" gap={1}>
               <HStack>
                 <Text fontWeight="bold" fontSize="lg">
                   Příspěvek #{postData.postId}
@@ -326,13 +338,13 @@ const PostCard: React.FC<PostCardProps> = ({
                   const statusInfo = getPostStatusInfo();
                   switch (statusInfo.status) {
                     case 'published':
-                      return useColorModeValue('green.600', 'green.400');
+                      return { base: "green.600", _dark: "green.400" };
                     case 'scheduled':
-                      return useColorModeValue('yellow.600', 'yellow.400');
+                      return { base: "yellow.600", _dark: "yellow.400" };
                     case 'unpublished':
-                      return mutedColor;
+                      return { base: "gray.500", _dark: "gray.400" };
                     default:
-                      return textColor;
+                      return { base: "gray.600", _dark: "gray.300" };
                   }
                 })()}
                 fontWeight={(() => {
@@ -356,41 +368,38 @@ const PostCard: React.FC<PostCardProps> = ({
             </VStack>
 
             {/* Akční tlačítka */}
-            <HStack spacing={1}>
-              <Tooltip label="Zobrazit detail">
-                <IconButton
-                  aria-label="Zobrazit detail"
-                  icon={<ViewIcon />}
-                  size="sm"
-                  variant="ghost"
-                  onClick={handleViewClick}
-                />
-              </Tooltip>
+            <HStack gap={1}>
+              <IconButton
+                aria-label="Zobrazit detail"
+                size="sm"
+                variant="ghost"
+                onClick={handleViewClick}
+              >
+                <Icon as={MdVisibility} />
+              </IconButton>
 
               {currentPermissions.canEdit && (
-                <Tooltip label="Editovat">
-                  <IconButton
-                    aria-label="Editovat příspěvek"
-                    icon={<EditIcon />}
-                    size="sm"
-                    variant="ghost"
-                    colorScheme="blue"
-                    onClick={handleEditClick}
-                  />
-                </Tooltip>
+                <IconButton
+                  aria-label="Editovat příspěvek"
+                  size="sm"
+                  variant="ghost"
+                  colorPalette="blue"
+                  onClick={handleEditClick}
+                >
+                  <Icon as={MdEdit} />
+                </IconButton>
               )}
 
               {currentPermissions.canDelete && showDeleteModal && (
-                <Tooltip label="Smazat">
-                  <IconButton
-                    aria-label="Smazat příspěvek"
-                    icon={<DeleteIcon />}
-                    size="sm"
-                    variant="ghost"
-                    colorScheme="red"
-                    onClick={() => openDeleteModal(postData.postId)}
-                  />
-                </Tooltip>
+                <IconButton
+                  aria-label="Smazat příspěvek"
+                  size="sm"
+                  variant="ghost"
+                  colorPalette="red"
+                  onClick={() => openDeleteModal(postData.postId)}
+                >
+                  <Icon as={MdDelete} />
+                </IconButton>
               )}
             </HStack>
           </HStack>
@@ -400,24 +409,24 @@ const PostCard: React.FC<PostCardProps> = ({
 
           {/* Footer s informacemi */}
           <HStack justifyContent="space-between" align="center">
-            <HStack spacing={4}>
+            <HStack gap={4}>
               {getContentsCount() > 0 && (
-                <Text fontSize="sm" color={textColor}>
+                <Text fontSize="sm" color={{ base: "gray.800", _dark: "white" }}>
                   {getContentsCount()} {getContentsCount() === 1 ? 'obsah' : 'obsahy'}
                 </Text>
               )}
 
               {getAttachmentsCount() > 0 && (
-                <HStack spacing={1}>
-                  <AttachmentIcon color={textColor} boxSize={3} />
-                  <Text fontSize="sm" color={textColor}>
+                <HStack gap={1}>
+                  <Icon as={MdAttachFile} color={{ base: "gray.800", _dark: "white" }} boxSize={3} />
+                  <Text fontSize="sm" color={{ base: "gray.800", _dark: "white" }}>
                     {getAttachmentsCount()}
                   </Text>
                 </HStack>
               )}
             </HStack>
 
-            <Text fontSize="xs" color={mutedColor}>
+            <Text fontSize="xs" color={{ base: "gray.500", _dark: "gray.400" }}>
               Vytvořil: {postData.creator.username}
             </Text>
           </HStack>
@@ -427,14 +436,13 @@ const PostCard: React.FC<PostCardProps> = ({
       {/* Delete Modal */}
       {showDeleteModal && (
         <DeletePostModal
-          isOpen={deleteModal.isOpen}
+          open={deleteModal.isOpen}
           onClose={closeDeleteModal}
           onConfirm={confirmDelete}
-          postId={postData.postId}
         />
       )}
     </>
   );
 };
 
-export default PostCard;
+export default Post;

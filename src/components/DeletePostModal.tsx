@@ -1,70 +1,91 @@
-import React from 'react';
+import React, { useState } from 'react';
 import {
-  Modal,
-  ModalOverlay,
-  ModalContent,
-  ModalHeader,
-  ModalFooter,
-  ModalBody,
-  ModalCloseButton,
+  DialogRoot,
+  DialogBackdrop,
+  DialogContent,
+  DialogPositioner,
+  DialogHeader,
+  DialogFooter,
+  DialogBody,
+  DialogCloseTrigger,
   Button,
   Text,
-  VStack,
-  Alert,
-  AlertIcon,
-  AlertDescription,
+  VStack
 } from '@chakra-ui/react';
 
 interface DeletePostModalProps {
-  isOpen: boolean;
+  open: boolean;
   onClose: () => void;
-  onConfirm: () => void;
-  postId: number;
+  onConfirm: () => Promise<void>;
+  postTitle?: string;
   isDeleting?: boolean;
 }
 
 const DeletePostModal: React.FC<DeletePostModalProps> = ({
-  isOpen,
+  open,
   onClose,
   onConfirm,
-  postId,
-  isDeleting = false,
+  postTitle,
+  isDeleting = false
 }) => {
-  return (
-    <Modal isOpen={isOpen} onClose={onClose} isCentered>
-      <ModalOverlay />
-      <ModalContent>
-        <ModalHeader>Smazat příspěvek</ModalHeader>
-        <ModalCloseButton />
-        <ModalBody>
-          <VStack spacing={4} align="stretch">
-            <Text>
-              Opravdu chcete smazat příspěvek #{postId}?
-            </Text>
-            <Alert status="warning" borderRadius="md">
-              <AlertIcon />
-              <AlertDescription>
-                Tato akce je nevratná. Publikované příspěvky nelze smazat.
-              </AlertDescription>
-            </Alert>
-          </VStack>
-        </ModalBody>
+  const [isConfirming, setIsConfirming] = useState(false);
 
-        <ModalFooter>
-          <Button variant="ghost" mr={3} onClick={onClose} isDisabled={isDeleting}>
-            Zrušit
-          </Button>
-          <Button
-            colorScheme="red"
-            onClick={() => onConfirm()}
-            isLoading={isDeleting}
-            loadingText="Mazání..."
-          >
-            Smazat příspěvek
-          </Button>
-        </ModalFooter>
-      </ModalContent>
-    </Modal>
+  const handleConfirm = async () => {
+    setIsConfirming(true);
+    try {
+      await onConfirm();
+    } finally {
+      setIsConfirming(false);
+    }
+  };
+
+  return (
+    <DialogRoot open={open} onOpenChange={({ open }) => !open && onClose()}>
+      <DialogBackdrop />
+      <DialogPositioner>
+        <DialogContent>
+          <DialogHeader>
+            <Text fontSize="lg" fontWeight="bold" color="red.500">
+              Smazat příspěvek
+            </Text>
+          </DialogHeader>
+
+          <DialogCloseTrigger />
+
+          <DialogBody>
+            <VStack gap={4} align="stretch">
+              <Text>
+                {postTitle
+                  ? `Opravdu chcete smazat příspěvek "${postTitle}"?`
+                  : 'Opravdu chcete smazat tento příspěvek?'
+                }
+              </Text>
+
+              <Text fontSize="sm" color={{ base: "red.600", _dark: "red.400" }}>
+                ⚠️ Tato akce je nevratná. Všechny obsahy a přílohy budou také smazány.
+              </Text>
+            </VStack>
+          </DialogBody>
+
+          <DialogFooter gap={3}>
+            <Button
+              variant="outline"
+              onClick={onClose}
+              disabled={isConfirming || isDeleting}
+            >
+              Zrušit
+            </Button>
+            <Button
+              colorPalette="red"
+              onClick={handleConfirm}
+              loading={isConfirming || isDeleting}
+            >
+              Smazat příspěvek
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </DialogPositioner>
+    </DialogRoot>
   );
 };
 

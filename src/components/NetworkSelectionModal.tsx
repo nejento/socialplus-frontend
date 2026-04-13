@@ -1,93 +1,104 @@
 import React from 'react';
 import {
-  Modal,
-  ModalOverlay,
-  ModalContent,
-  ModalHeader,
-  ModalBody,
-  ModalFooter,
-  ModalCloseButton,
+  DialogRoot,
+  DialogBackdrop,
+  DialogContent,
+  DialogPositioner,
+  DialogHeader,
+  DialogBody,
+  DialogFooter,
+  DialogCloseTrigger,
   Button,
   Text,
   VStack,
-  Checkbox
+  CheckboxRoot,
+  CheckboxLabel,
+  CheckboxControl
 } from '@chakra-ui/react';
 import { NetworkInfo } from '@/types';
 
 interface NetworkSelectionModalProps {
-  isOpen: boolean;
+  open: boolean;
   onClose: () => void;
   authorizedNetworks: NetworkInfo[];
   selectedNetworks: number[];
   onNetworkToggle: (networkId: number, isSelected: boolean) => void;
   onConfirm: () => void;
-  isLoading: boolean;
+  loading: boolean;
 }
 
 export const NetworkSelectionModal: React.FC<NetworkSelectionModalProps> = ({
-  isOpen,
+  open,
   onClose,
   authorizedNetworks,
   selectedNetworks,
   onNetworkToggle,
   onConfirm,
-  isLoading
+  loading
 }) => {
   return (
-    <Modal isOpen={isOpen} onClose={onClose} size="lg">
-      <ModalOverlay />
-      <ModalContent>
-        <ModalHeader>Výběr sociálních sítí</ModalHeader>
-        <ModalCloseButton />
-        <ModalBody>
-          <Text mb={4}>
-            Vyberte sociální sítě, na které chcete příspěvek okamžitě odeslat:
-          </Text>
+    <DialogRoot open={open} onOpenChange={({ open }) => !open && onClose()}>
+      <DialogBackdrop />
+      <DialogPositioner>
+        <DialogContent>
+          <DialogHeader>
+            <Text fontSize="lg" fontWeight="bold">
+              Vyberte sociální sítě
+            </Text>
+          </DialogHeader>
 
-          <VStack spacing={3} align="stretch">
-            {authorizedNetworks.map(network => (
-              <Checkbox
-                key={network.id}
-                isChecked={selectedNetworks.includes(network.id)}
-                onChange={(e) => onNetworkToggle(network.id, e.target.checked)}
-                colorScheme="blue"
-              >
-                <Text fontSize="sm">
-                  {network.networkName}
-                  {network.isOwned ? ' (vlastní)' : ` (${network.owner?.username})`}
+          <DialogCloseTrigger />
+
+          <DialogBody>
+            <VStack gap={3} align="stretch">
+              <Text fontSize="sm" color={{ base: "gray.600", _dark: "gray.400" }}>
+                Vyberte sítě, na které chcete příspěvek okamžitě odeslat:
+              </Text>
+
+              {authorizedNetworks.length === 0 ? (
+                <Text fontSize="sm" color={{ base: "gray.500", _dark: "gray.500" }}>
+                  Nejsou k dispozici žádné autorizované sítě.
                 </Text>
-              </Checkbox>
-            ))}
-          </VStack>
+              ) : (
+                <VStack gap={2} align="stretch">
+                  {authorizedNetworks.map((network) => (
+                    <CheckboxRoot
+                      key={network.id}
+                      checked={selectedNetworks.includes(network.id)}
+                      onCheckedChange={(details) => onNetworkToggle(network.id, details.checked === true)}
+                    >
+                      <CheckboxControl />
+                      <CheckboxLabel>
+                        <Text fontSize="sm">
+                          {network.networkName}
+                        </Text>
+                      </CheckboxLabel>
+                    </CheckboxRoot>
+                  ))}
+                </VStack>
+              )}
+            </VStack>
+          </DialogBody>
 
-          {authorizedNetworks.length === 0 && (
-            <Text fontSize="sm" color="orange.500" mt={3}>
-              Nemáte oprávnění odeslat příspěvek na žádnou ze sociálních sítí.
-            </Text>
-          )}
-
-          {selectedNetworks.length === 0 && authorizedNetworks.length > 0 && (
-            <Text fontSize="sm" color="red.500" mt={3}>
-              Vyberte alespoň jednu síť pro odeslání.
-            </Text>
-          )}
-        </ModalBody>
-
-        <ModalFooter>
-          <Button
-            colorScheme="orange"
-            onClick={onConfirm}
-            isLoading={isLoading}
-            isDisabled={selectedNetworks.length === 0}
-            mr={3}
-          >
-            Odeslat na vybrané sítě ({selectedNetworks.length})
-          </Button>
-          <Button variant="ghost" onClick={onClose}>
-            Zrušit
-          </Button>
-        </ModalFooter>
-      </ModalContent>
-    </Modal>
+          <DialogFooter gap={3}>
+            <Button
+              variant="outline"
+              onClick={onClose}
+              disabled={loading}
+            >
+              Zrušit
+            </Button>
+            <Button
+              colorPalette="blue"
+              onClick={onConfirm}
+              loading={loading}
+              disabled={selectedNetworks.length === 0}
+            >
+              Odeslat na vybrané sítě ({selectedNetworks.length})
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </DialogPositioner>
+    </DialogRoot>
   );
 };

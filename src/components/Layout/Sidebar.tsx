@@ -2,19 +2,17 @@ import React from 'react';
 import {
   Box,
   VStack,
-  Link,
   Text,
-  useColorModeValue,
   Button,
-  Divider,
+  Separator,
   HStack,
   Image,
-  Drawer,
+  DrawerRoot,
+  DrawerBackdrop,
   DrawerBody,
   DrawerHeader,
-  DrawerOverlay,
   DrawerContent,
-  DrawerCloseButton
+  DrawerCloseTrigger
 } from '@chakra-ui/react';
 import { Link as RouterLink, useLocation } from 'react-router';
 import { useAuth } from '../../contexts/AuthContext';
@@ -28,11 +26,6 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
   const { logout, user } = useAuth();
   const location = useLocation();
 
-  const bgColor = useColorModeValue('white', 'gray.800');
-  const borderColor = useColorModeValue('gray.200', 'gray.700');
-  const activeBg = useColorModeValue('blue.50', 'blue.900');
-  const activeColor = useColorModeValue('blue.600', 'blue.200');
-  const logoSrc = useColorModeValue('/LogoLight.svg', '/LogoDark.svg');
 
   const navItems = [
     { path: '/', label: 'Domů', icon: '🏠' },
@@ -56,42 +49,43 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
   };
 
   const sidebarContent = (
-    <VStack spacing={6} align="stretch" h="full">
+    <VStack gap={6} align="stretch" h="full">
       {/* Logo */}
       <Box>
-        <Image
-          src={logoSrc}
-          alt="SocialPlus"
-          width="100%"
-          height="auto"
-          maxHeight="60px"
-          objectFit="contain"
-        />
+        <picture>
+          <source srcSet="/LogoDark.svg" media="(prefers-color-scheme: dark)" />
+          <Image
+            src="/LogoLight.svg"
+            alt="SocialPlus"
+            width="100%"
+            height="auto"
+            maxHeight="60px"
+            objectFit="contain"
+          />
+        </picture>
       </Box>
 
-      <Divider />
+      <Separator />
 
       {/* Navigace */}
-      <VStack spacing={2} align="stretch" flex={1}>
+      <VStack gap={2} align="stretch" flex={1}>
         {navItems.map((item) => {
           const isActive = location.pathname === item.path;
 
           return (
-            <Link
+            <RouterLink
               key={item.path}
-              as={RouterLink}
               to={item.path}
-              textDecoration="none"
-              _hover={{ textDecoration: 'none' }}
+              style={{ textDecoration: 'none' }}
               onClick={handleNavClick}
             >
               <HStack
                 p={3}
                 borderRadius="md"
-                bg={isActive ? activeBg : 'transparent'}
-                color={isActive ? activeColor : 'inherit'}
+                bg={isActive ? { base: "blue.50", _dark: "blue.900" } : 'transparent'}
+                color={isActive ? { base: "blue.600", _dark: "blue.200" } : 'inherit'}
                 _hover={{
-                  bg: isActive ? activeBg : useColorModeValue('gray.100', 'gray.700')
+                  bg: isActive ? { base: "blue.50", _dark: "blue.900" } : { base: "gray.100", _dark: "gray.700" }
                 }}
                 transition="all 0.2s"
               >
@@ -100,7 +94,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
                   {item.label}
                 </Text>
               </HStack>
-            </Link>
+            </RouterLink>
           );
         })}
       </VStack>
@@ -109,11 +103,11 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
       <Box
         p={3}
         borderRadius="md"
-        bg={useColorModeValue('gray.50', 'gray.700')}
+        bg={{ base: "gray.50", _dark: "gray.700" }}
         borderWidth="1px"
-        borderColor={borderColor}
+        borderColor={{ base: "gray.200", _dark: "gray.700" }}
       >
-        <Text fontSize="sm" fontWeight="medium" color={activeColor}>
+        <Text fontSize="sm" fontWeight="medium" color={{ base: "blue.600", _dark: "blue.200" }}>
           {user?.displayname}
         </Text>
         <Text fontSize="xs" color="gray.500">
@@ -125,7 +119,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
       <Box>
         <Button
           variant="ghost"
-          colorScheme="red"
+          colorPalette="red"
           size="sm"
           width="full"
           onClick={handleLogout}
@@ -145,9 +139,9 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
         top={0}
         h="100vh"
         w="250px"
-        bg={bgColor}
+        bg={{ base: "white", _dark: "gray.800" }}
         borderRight="1px"
-        borderColor={borderColor}
+        borderColor={{ base: "gray.200", _dark: "gray.700" }}
         p={4}
         display={{ base: 'none', md: 'block' }}
       >
@@ -155,48 +149,49 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
       </Box>
 
       {/* Mobile Drawer */}
-      <Drawer
-        isOpen={isOpen || false}
-        placement="left"
-        onClose={onClose || (() => {})}
+      <DrawerRoot
+        open={isOpen || false}
+        placement="start"
+        onOpenChange={({ open }) => !open && onClose && onClose()}
         size="xs"
       >
-        <DrawerOverlay />
+        <DrawerBackdrop />
         <DrawerContent>
-          <DrawerCloseButton />
+          <DrawerCloseTrigger />
           <DrawerHeader>
-            <Image
-              src={logoSrc}
-              alt="SocialPlus"
-              width="100%"
-              height="auto"
-              maxHeight="40px"
-              objectFit="contain"
-            />
+            <picture>
+              <source srcSet="/LogoDark.svg" media="(prefers-color-scheme: dark)" />
+              <Image
+                src="/LogoLight.svg"
+                alt="SocialPlus"
+                width="100%"
+                height="auto"
+                maxHeight="40px"
+                objectFit="contain"
+              />
+            </picture>
           </DrawerHeader>
           <DrawerBody p={4}>
-            <VStack spacing={4} align="stretch" h="full">
+            <VStack gap={4} align="stretch" h="full">
               {/* Navigace */}
-              <VStack spacing={2} align="stretch" flex={1}>
+              <VStack gap={2} align="stretch" flex={1}>
                 {navItems.map((item) => {
                   const isActive = location.pathname === item.path;
 
                   return (
-                    <Link
+                    <RouterLink
                       key={item.path}
-                      as={RouterLink}
                       to={item.path}
-                      textDecoration="none"
-                      _hover={{ textDecoration: 'none' }}
+                      style={{ textDecoration: 'none' }}
                       onClick={handleNavClick}
                     >
                       <HStack
                         p={3}
                         borderRadius="md"
-                        bg={isActive ? activeBg : 'transparent'}
-                        color={isActive ? activeColor : 'inherit'}
+                        bg={isActive ? { base: "blue.50", _dark: "blue.900" } : 'transparent'}
+                        color={isActive ? { base: "blue.600", _dark: "blue.200" } : 'inherit'}
                         _hover={{
-                          bg: isActive ? activeBg : useColorModeValue('gray.100', 'gray.700')
+                          bg: isActive ? { base: "blue.50", _dark: "blue.900" } : { base: "gray.100", _dark: "gray.700" }
                         }}
                         transition="all 0.2s"
                       >
@@ -205,7 +200,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
                           {item.label}
                         </Text>
                       </HStack>
-                    </Link>
+                    </RouterLink>
                   );
                 })}
               </VStack>
@@ -214,11 +209,11 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
               <Box
                 p={3}
                 borderRadius="md"
-                bg={useColorModeValue('gray.50', 'gray.700')}
+                bg={{ base: "gray.50", _dark: "gray.700" }}
                 borderWidth="1px"
-                borderColor={borderColor}
+                borderColor={{ base: "gray.200", _dark: "gray.700" }}
               >
-                <Text fontSize="sm" fontWeight="medium" color={activeColor}>
+                <Text fontSize="sm" fontWeight="medium" color={{ base: "blue.600", _dark: "blue.200" }}>
                   {user?.displayname}
                 </Text>
                 <Text fontSize="xs" color="gray.500">
@@ -230,7 +225,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
               <Box>
                 <Button
                   variant="ghost"
-                  colorScheme="red"
+                  colorPalette="red"
                   size="sm"
                   width="full"
                   onClick={handleLogout}
@@ -241,9 +236,8 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
             </VStack>
           </DrawerBody>
         </DrawerContent>
-      </Drawer>
+      </DrawerRoot>
     </>
   );
 };
 
-export default Sidebar;

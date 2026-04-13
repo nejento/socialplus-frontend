@@ -4,13 +4,12 @@ import {
   VStack,
   Text,
   Button,
-  Card,
   Badge,
   HStack,
   IconButton,
-  useColorModeValue,
+  Icon
 } from '@chakra-ui/react';
-import { EditIcon } from '@chakra-ui/icons';
+import { MdEdit } from 'react-icons/md';
 import { OwnedNetwork, NetworkType } from '@/types';
 
 // Network type configurations with display names and colors
@@ -30,21 +29,18 @@ const getNetworkTypeInfo = (type: NetworkType) => {
   return NETWORK_TYPES.find(nt => nt.type === type);
 };
 
-interface NetworkCardProps {
+interface NetworkProps {
   network: OwnedNetwork;
   onEdit: (networkId: number) => void;
   isOwnNetwork?: boolean;
   showAdminBadge?: boolean;
 }
 
-const NetworkCard: React.FC<NetworkCardProps> = ({
+const Network: React.FC<NetworkProps> = ({
   network,
   onEdit,
   isOwnNetwork = true
 }) => {
-  const cardBg = useColorModeValue('white', 'gray.700');
-  const borderColor = useColorModeValue('gray.200', 'gray.600');
-  const textColor = useColorModeValue('gray.600', 'gray.300');
   const typeInfo = getNetworkTypeInfo(network.networkType);
 
   // Určíme, zda zobrazit tlačítko pro úpravu (pouze pro vlastní sítě)
@@ -54,36 +50,36 @@ const NetworkCard: React.FC<NetworkCardProps> = ({
   const showNote = isOwnNetwork && network.note;
 
   return (
-    <Card
-      bg={cardBg}
-      borderColor={borderColor}
+    <Box
+      bg={{ base: "white", _dark: "gray.800" }}
+      borderColor={{ base: "gray.200", _dark: "gray.600" }}
       borderWidth="1px"
       borderRadius="lg"
       p={4}
       shadow="sm"
       transition="all 0.2s"
       _hover={{
-        bg: useColorModeValue('gray.50', 'gray.650'),
-        borderColor: useColorModeValue('gray.300', 'gray.500'),
-        shadow: 'md',
+        bg: { base: "gray.50", _dark: "gray.700" },
+        borderColor: { base: "gray.300", _dark: "gray.500" },
+        shadow: 'md'
       }}
       position="relative"
     >
-      <VStack spacing={4} align="stretch">
+      <VStack gap={4} align="stretch">
         <HStack justify="space-between" align="start">
-          <VStack align="start" spacing={2} flex={1}>
-            <HStack spacing={2} align="start" width="100%">
-              <VStack align="start" spacing={1} flex={1}>
-                <Text fontWeight="bold" fontSize="lg" isTruncated>
+          <VStack align="start" gap={2} flex={1}>
+            <HStack gap={2} align="start" width="100%">
+              <VStack align="start" gap={1} flex={1}>
+                <Text fontWeight="bold" fontSize="lg" truncate>
                   {network.networkName}
                 </Text>
-                <Badge colorScheme="blue" variant="subtle" size="sm">
+                <Badge colorPalette="blue" variant="subtle" size="sm">
                   ID: {network.networkId}
                 </Badge>
               </VStack>
               {typeInfo && (
                 <Badge
-                  colorScheme={typeInfo.color}
+                  colorPalette={typeInfo.color}
                   variant="solid"
                   size="sm"
                   flexShrink={0}
@@ -96,22 +92,23 @@ const NetworkCard: React.FC<NetworkCardProps> = ({
           {showEditButton && (
             <IconButton
               aria-label="Upravit síť"
-              icon={<EditIcon />}
               size="sm"
               variant="ghost"
               onClick={() => onEdit(network.networkId)}
               flexShrink={0}
-            />
+            >
+              <Icon as={MdEdit} />
+            </IconButton>
           )}
         </HStack>
 
-        <VStack align="start" spacing={3}>
+        <VStack align="start" gap={3}>
           {showNote && (
             <Box>
               <Text fontSize="sm" fontWeight="medium" mb={1}>
                 Poznámka:
               </Text>
-              <Text fontSize="sm" color={textColor} whiteSpace="pre-wrap">
+              <Text fontSize="sm" color={{ base: "gray.800", _dark: "white" }} whiteSpace="pre-wrap">
                 {network.note}
               </Text>
             </Box>
@@ -121,7 +118,7 @@ const NetworkCard: React.FC<NetworkCardProps> = ({
             <Text fontSize="sm" fontWeight="medium" mb={1}>
               Vlastník:
             </Text>
-            <Text fontSize="sm" color={textColor}>
+            <Text fontSize="sm" color={{ base: "gray.800", _dark: "white" }}>
               {network.owner.displayname} (@{network.owner.username})
             </Text>
           </Box>
@@ -131,7 +128,7 @@ const NetworkCard: React.FC<NetworkCardProps> = ({
               Oprávnění:
             </Text>
             <Badge
-              colorScheme={
+              colorPalette={
                 network.permission === 'admin' ? 'red' :
                 network.permission === 'write' ? 'green' : 'blue'
               }
@@ -145,9 +142,8 @@ const NetworkCard: React.FC<NetworkCardProps> = ({
           {showEditButton && (
             <Button
               size="sm"
-              colorScheme="blue"
+              colorPalette="blue"
               variant="outline"
-              leftIcon={<EditIcon />}
               onClick={() => onEdit(network.networkId)}
               width="full"
             >
@@ -156,8 +152,8 @@ const NetworkCard: React.FC<NetworkCardProps> = ({
           )}
         </VStack>
       </VStack>
-    </Card>
+    </Box>
   );
 };
 
-export default NetworkCard;
+export default Network;

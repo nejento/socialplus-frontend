@@ -34,7 +34,7 @@ class ErrorBoundary extends Component<Props, State> {
           justifyContent="center"
           p={4}
         >
-          <VStack spacing={4} maxW="container.md" textAlign="center">
+          <VStack gap={4} maxW="container.md" textAlign="center">
             <Heading size="lg">Něco se pokazilo</Heading>
             <Text>Omlouváme se, došlo k neočekávané chybě.</Text>
             {process.env.NODE_ENV === 'development' && (

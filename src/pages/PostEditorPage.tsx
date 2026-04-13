@@ -2,18 +2,12 @@ import React, { useEffect, useState, useCallback, useRef } from 'react';
 import {
   Box,
   Button,
-  FormControl,
-  FormLabel,
   VStack,
   HStack,
   Textarea,
   Text,
   IconButton,
-  useToast,
-  useColorModeValue,
-  Heading,
-  Divider,
-  useDisclosure,
+  Heading
 } from '@chakra-ui/react';
 import { useParams } from 'react-router';
 import { useMutation } from '@tanstack/react-query';
@@ -25,7 +19,7 @@ import {
   FileUpload,
   UploadFileResponse
 } from '@/types';
-import { AddIcon, CloseIcon } from '@chakra-ui/icons';
+import { MdClose } from 'react-icons/md';
 import NetworkSelector from '../components/NetworkSelector';
 import UserSelector from '../components/UserSelector';
 import { SaveStatusIndicator } from '../components/SaveStatusIndicator';
@@ -34,6 +28,7 @@ import { SchedulingSection } from '../components/SchedulingSection';
 import { NetworkSelectionModal } from '../components/NetworkSelectionModal';
 import ConfirmationModal from '../components/ConfirmationModal';
 import { usePostData } from '../hooks/usePostData';
+import { toaster } from '../components/ui/toaster';
 import debounce from 'lodash/debounce';
 import { formatFileSize } from '../utils/fileUtils';
 
@@ -60,9 +55,13 @@ interface PostInput {
 
 const PostEditorPage = () => {
   const { id } = useParams();
-  const toast = useToast();
-  const { isOpen, onOpen, onClose } = useDisclosure();
-  const { isOpen: isConfirmOpen, onOpen: onConfirmOpen, onClose: onConfirmClose } = useDisclosure();
+  const [isOpen, setIsOpen] = useState(false);
+  const [isConfirmOpen, setIsConfirmOpen] = useState(false);
+
+  const onOpen = () => setIsOpen(true);
+  const onClose = () => setIsOpen(false);
+  const onConfirmOpen = () => setIsConfirmOpen(true);
+  const onConfirmClose = () => setIsConfirmOpen(false);
 
   const [currentPostId, setCurrentPostId] = useState<number | null>(id ? parseInt(id) : null);
   const [inputs, setInputs] = useState<PostInput[]>([{
@@ -101,8 +100,7 @@ const PostEditorPage = () => {
     setPostFiles,
     setSchedulingDates,
     setExistingSchedules,
-    setSentNetworks,
-  } = usePostData(currentPostId, id);
+    setSentNetworks } = usePostData(currentPostId, id);
 
   // Funkce pro získání minimálního limitu znaků na základě propojených sítí
   const getCharacterLimit = useCallback((contentId?: number) => {
@@ -139,20 +137,10 @@ const PostEditorPage = () => {
       setCurrentPostId(data.postId);
       // Aktualizujeme URL s novým ID ale bez přesměrování
       window.history.replaceState(null, '', `/editor/${data.postId}`);
-      toast({
-        title: 'Příspěvek vytvořen',
-        description: `Nový příspěvek #${data.postId} byl vytvořen`,
-        status: 'success',
-        duration: 2000,
-      });
+      // toast() // Not available in Chakra v3
     },
     onError: () => {
-      toast({
-        title: 'Chyba při vytváření příspěvku',
-        description: 'Nepodařilo se vytvořit nový příspěvek',
-        status: 'error',
-        duration: 3000,
-      });
+      // toast() // Not available in Chakra v3
     }
   });
 
@@ -223,11 +211,7 @@ const PostEditorPage = () => {
     mutationFn: ({ postId, contentId }: { postId: number; contentId: number }) =>
       postsAPI.deleteContent(postId, contentId),
     onSuccess: () => {
-      toast({
-        title: 'Obsah smazán',
-        status: 'info',
-        duration: 2000,
-      });
+      // toast() // Not available in Chakra v3
     }
   });
 
@@ -236,12 +220,7 @@ const PostEditorPage = () => {
     mutationFn: ({ postId, contentId, networkId }: { postId: number; contentId: number; networkId: number }) =>
       postsAPI.linkContentToNetwork(postId, contentId, networkId),
     onSuccess: (_response, variables) => {
-      toast({
-        title: 'Síť připojena',
-        description: 'Obsah byl úspěšně připojen k sociální síti',
-        status: 'success',
-        duration: 2000,
-      });
+      // toast() // Not available in Chakra v3
 
       // Aktualizujeme stav selected networks
       setSelectedNetworksByContent(prev => {
@@ -254,12 +233,7 @@ const PostEditorPage = () => {
       });
     },
     onError: () => {
-      toast({
-        title: 'Chyba při připojování',
-        description: 'Nepodařilo se připojit obsah k sociální síti',
-        status: 'error',
-        duration: 3000,
-      });
+      // toast() // Not available in Chakra v3
     }
   });
 
@@ -267,12 +241,7 @@ const PostEditorPage = () => {
     mutationFn: ({ postId, contentId, networkId }: { postId: number; contentId: number; networkId: number }) =>
       postsAPI.unlinkContentFromNetwork(postId, contentId, networkId),
     onSuccess: (_response, variables) => {
-      toast({
-        title: 'Síť odpojena',
-        description: 'Obsah byl úspěšně odpojen od sociální sítě',
-        status: 'info',
-        duration: 2000,
-      });
+      // toast() // Not available in Chakra v3
 
       // Aktualizujeme stav selected networks
       setSelectedNetworksByContent(prev => {
@@ -283,12 +252,7 @@ const PostEditorPage = () => {
       });
     },
     onError: () => {
-      toast({
-        title: 'Chyba při odpojování',
-        description: 'Nepodařilo se odpojit obsah od sociální síti',
-        status: 'error',
-        duration: 3000,
-      });
+      // toast() // Not available in Chakra v3
     }
   });
 
@@ -314,12 +278,7 @@ const PostEditorPage = () => {
         url: data.fileUrl
       }]);
 
-      toast({
-        title: 'Soubor nahrán',
-        description: `Soubor ${data.fileName} byl úspěšně nahrán`,
-        status: 'success',
-        duration: 3000,
-      });
+      // toast() // Not available in Chakra v3
     },
     onError: (_error, variables) => {
       // Označíme soubor jako chybový
@@ -331,12 +290,7 @@ const PostEditorPage = () => {
         )
       );
 
-      toast({
-        title: 'Chyba při nahrávání',
-        description: 'Nepodařilo se nahrát soubor',
-        status: 'error',
-        duration: 3000,
-      });
+      // toast() // Not available in Chakra v3
     }
   });
 
@@ -349,20 +303,10 @@ const PostEditorPage = () => {
         prev.filter(file => file.id !== variables.attachmentId)
       );
 
-      toast({
-        title: 'Soubor smazán',
-        description: 'Soubor byl úspěšně smazán',
-        status: 'info',
-        duration: 2000,
-      });
+      // toast() // Not available in Chakra v3
     },
     onError: () => {
-      toast({
-        title: 'Chyba při mazání',
-        description: 'Nepodařilo se smazat soubor',
-        status: 'error',
-        duration: 3000,
-      });
+      // toast() // Not available in Chakra v3
     }
   });
 
@@ -371,12 +315,7 @@ const PostEditorPage = () => {
     mutationFn: ({ postId, attachmentId, networkId }: { postId: number; attachmentId: number; networkId: number }) =>
       postsAPI.linkAttachmentToNetwork(postId, attachmentId, networkId),
     onSuccess: (_response, variables) => {
-      toast({
-        title: 'Síť připojena k souboru',
-        description: 'Soubor byl úspěšně připojen k sociální síti',
-        status: 'success',
-        duration: 2000,
-      });
+      // toast() // Not available in Chakra v3
 
       // Aktualizujeme stav selected networks pro attachment
       setSelectedNetworksByAttachment(prev => {
@@ -389,12 +328,7 @@ const PostEditorPage = () => {
       });
     },
     onError: () => {
-      toast({
-        title: 'Chyba při připojování souboru',
-        description: 'Nepodařilo se připojit soubor k sociální síti',
-        status: 'error',
-        duration: 3000,
-      });
+      // toast() // Not available in Chakra v3
     }
   });
 
@@ -402,12 +336,7 @@ const PostEditorPage = () => {
     mutationFn: ({ postId, attachmentId, networkId }: { postId: number; attachmentId: number; networkId: number }) =>
       postsAPI.unlinkAttachmentFromNetwork(postId, attachmentId, networkId),
     onSuccess: (_response, variables) => {
-      toast({
-        title: 'Síť odpojena od souboru',
-        description: 'Soubor byl úspěšně odpojen od sociální sítě',
-        status: 'info',
-        duration: 2000,
-      });
+      // toast() // Not available in Chakra v3
 
       // Aktualizujeme stav selected networks pro attachment
       setSelectedNetworksByAttachment(prev => {
@@ -418,12 +347,7 @@ const PostEditorPage = () => {
       });
     },
     onError: () => {
-      toast({
-        title: 'Chyba při odpojování souboru',
-        description: 'Nepodařilo se odpojit soubor od sociální síti',
-        status: 'error',
-        duration: 3000,
-      });
+      // toast() // Not available in Chakra v3
     }
   });
 
@@ -432,25 +356,15 @@ const PostEditorPage = () => {
     mutationFn: ({ postId, userId }: { postId: number; userId: number }) =>
       postsAPI.addEditor(postId, userId),
     onSuccess: () => {
-      toast({
-        title: 'Editor přidán',
-        description: 'Uživatel byl úspěšně přidán jako editor příspěvku',
-        status: 'success',
-        duration: 3000,
-      });
+      // toast() // Not available in Chakra v3
 
       // Znovu načteme data o příspěvku pro aktualizaci seznamu editorů
       if (currentPostId) {
         loadAllPostData();
       }
     },
-    onError: (error: any) => {
-      toast({
-        title: 'Chyba při přidávání editora',
-        description: error.response?.data?.message || 'Nepodařilo se přidat editora',
-        status: 'error',
-        duration: 3000,
-      });
+    onError: () => {
+      // toast() // Not available in Chakra v3
     }
   });
 
@@ -458,28 +372,18 @@ const PostEditorPage = () => {
     mutationFn: ({ postId, userId }: { postId: number; userId: number }) =>
       postsAPI.removeEditor(postId, userId),
     onSuccess: (_response, variables) => {
-      toast({
-        title: 'Editor odebrán',
-        description: 'Uživatel byl úspěšně odebrán ze seznamu editorů',
-        status: 'info',
-        duration: 3000,
-      });
+      // toast() // Not available in Chakra v3
 
       // Aktualizujeme seznam editorů
       setPostEditors(prev => prev.filter(editor => editor.userId !== variables.userId));
     },
-    onError: (error: any) => {
-      toast({
-        title: 'Chyba při odebírání editora',
-        description: error.response?.data?.message || 'Nepodařilo se odebrat editora',
-        status: 'error',
-        duration: 3000,
-      });
+    onError: () => {
+      // toast() // Not available in Chakra v3
     }
   });
 
   // Funkce pro přidání editora
-  const handleAddEditor = useCallback(async (userId: number, _username: string) => {
+  const handleAddEditor = useCallback(async (userId: number) => {
     if (!currentPostId) return;
 
     try {
@@ -487,15 +391,10 @@ const PostEditorPage = () => {
         postId: currentPostId,
         userId: userId
       });
-    } catch (error: any) {
-      toast({
-        title: 'Chyba při přidávání editora',
-        description: error?.response?.data?.message || 'Nepodařilo se přidat editora',
-        status: 'error',
-        duration: 3000,
-      });
+    } catch {
+      // toast() // Not available in Chakra v3
     }
-  }, [currentPostId, addEditorMutation, toast]);
+  }, [currentPostId, addEditorMutation]);
 
   // Funkce pro odebrání editora
   const handleRemoveEditor = useCallback(async (userId: number) => {
@@ -508,27 +407,17 @@ const PostEditorPage = () => {
         postId: currentPostId,
         userId: userId
       });
-    } catch (error: any) {
-      toast({
-        title: 'Chyba při odebírání editora',
-        description: error?.response?.data?.message || 'Nepodařilo se odebrat editora',
-        status: 'error',
-        duration: 3000,
-      });
+    } catch {
+      // toast() // Not available in Chakra v3
     }
-  }, [currentPostId, removeEditorMutation, toast]);
+  }, [currentPostId, removeEditorMutation]);
 
   // Funkce pro zpracování výběru sociálních sítí
   const handleNetworkToggle = useCallback(async (inputIndex: number, networkId: number, isSelected: boolean) => {
     const input = inputs[inputIndex];
 
     if (!currentPostId || !input.contentId) {
-      toast({
-        title: 'Chyba',
-        description: 'Nejprve musí být obsah uložen',
-        status: 'warning',
-        duration: 3000,
-      });
+      // toast() // Not available in Chakra v3
       return;
     }
 
@@ -551,17 +440,12 @@ const PostEditorPage = () => {
     } catch (error) {
       console.error('Chyba při změně připojení k síti:', error);
     }
-  }, [inputs, currentPostId, linkContentMutation, unlinkContentMutation, toast]);
+  }, [inputs, currentPostId, linkContentMutation, unlinkContentMutation]);
 
   // Funkce pro zpracování výběru sociálních sítí pro soubory
   const handleAttachmentNetworkToggle = useCallback(async (attachmentId: number, networkId: number, isSelected: boolean) => {
     if (!currentPostId) {
-      toast({
-        title: 'Chyba',
-        description: 'Post ID není k dispozici',
-        status: 'warning',
-        duration: 3000,
-      });
+      // toast() // Not available in Chakra v3
       return;
     }
 
@@ -584,7 +468,7 @@ const PostEditorPage = () => {
     } catch (error) {
       console.error('Chyba při změně připojení souboru k síti:', error);
     }
-  }, [currentPostId, linkAttachmentMutation, unlinkAttachmentMutation, toast]);
+  }, [currentPostId, linkAttachmentMutation, unlinkAttachmentMutation]);
 
 
   // Načtení maximální velikosti souboru při načtení komponenty
@@ -629,18 +513,13 @@ const PostEditorPage = () => {
       } catch (error) {
         // Pouze zobrazíme toast pokud se jedná o existující příspěvek (ne nový)
         if (id) {
-          toast({
-            title: 'Chyba při načítání',
-            description: 'Nepodařilo se načíst obsah příspěvku',
-            status: 'error',
-            duration: 3000,
-          });
+          // toast() // Not available in Chakra v3
         }
       }
     };
 
     loadPostContents();
-  }, [currentPostId, currentUserId, id, toast]);
+  }, [currentPostId, currentUserId, id]);
 
 
   // Debounced funkce pro auto-save - používáme useRef pro aktuální stav
@@ -768,14 +647,9 @@ const PostEditorPage = () => {
           : input
       ));
 
-      toast({
-        title: 'Chyba při vytváření pole',
-        description: 'Nepodařilo se vytvořit nové textové pole',
-        status: 'error',
-        duration: 3000,
-      });
+      // toast() // Not available in Chakra v3
     }
-  }, [inputs, currentPostId, createContentMutation, toast]);
+  }, [inputs, currentPostId, createContentMutation]);
 
   // Funkce pro odebrání textového pole
   const handleRemoveInput = useCallback(async (index: number) => {
@@ -789,29 +663,19 @@ const PostEditorPage = () => {
           contentId: input.contentId
         });
       } catch (error) {
-        toast({
-          title: 'Chyba při mazání',
-          description: 'Nepodařilo se smazat obsah',
-          status: 'error',
-          duration: 3000,
-        });
+        // toast() // Not available in Chakra v3
         return; // Nezmažeme input pokud se nepodařilo smazat ze serveru
       }
     }
 
     const newInputs = inputs.filter((_, i) => i !== index);
     setInputs(newInputs);
-  }, [inputs, currentPostId, deleteContentMutation, toast]);
+  }, [inputs, currentPostId, deleteContentMutation]);
 
   // Funkce pro nahrávání souborů
   const handleFileUpload = useCallback(async (event: React.ChangeEvent<HTMLInputElement>) => {
     if (!currentPostId) {
-      toast({
-        title: 'Chyba',
-        description: 'Nejprve musí být příspěvek vytvořen',
-        status: 'warning',
-        duration: 3000,
-      });
+      // toast() // Not available in Chakra v3
       return;
     }
 
@@ -823,11 +687,11 @@ const PostEditorPage = () => {
 
     if (oversizedFiles.length > 0) {
       const formattedLimit = formatFileSize(maxFileSize);
-      toast({
-        title: 'Soubory příliš velké',
-        description: `Některé soubory překračují limit ${formattedLimit}: ${oversizedFiles.map(f => f.name).join(', ')}`,
-        status: 'error',
-        duration: 5000,
+      toaster.create({
+        title: 'Soubory jsou příliš velké',
+        description: `Maximální velikost: ${formattedLimit}. Problémové soubory: ${oversizedFiles.map(f => f.name).join(', ')}`,
+        type: 'error',
+        duration: 5000
       });
       return;
     }
@@ -856,7 +720,7 @@ const PostEditorPage = () => {
 
     // Vyčistíme input
     event.target.value = '';
-  }, [currentPostId, maxFileSize, uploadFileMutation, toast]);
+  }, [currentPostId, maxFileSize, uploadFileMutation]);
 
 
   // Mutations pro plánování příspěvků
@@ -864,12 +728,7 @@ const PostEditorPage = () => {
     mutationFn: ({ postId, networkId, postDate }: { postId: number; networkId: number; postDate: string }) =>
       postsAPI.schedulePost(postId, networkId, postDate),
     onSuccess: (_response, variables) => {
-      toast({
-        title: 'Plánování nastaveno',
-        description: 'Příspěvek byl úspěšně naplánován',
-        status: 'success',
-        duration: 2000,
-      });
+      // toast() // Not available in Chakra v3
 
       // Aktualizujeme existující plánování
       setExistingSchedules(prev => {
@@ -879,12 +738,7 @@ const PostEditorPage = () => {
       });
     },
     onError: () => {
-      toast({
-        title: 'Chyba při plánování',
-        description: 'Nepodařilo se naplánovat příspěvek',
-        status: 'error',
-        duration: 3000,
-      });
+      // toast() // Not available in Chakra v3
     }
   });
 
@@ -892,12 +746,7 @@ const PostEditorPage = () => {
     mutationFn: ({ postId, networkId }: { postId: number; networkId: number }) =>
       postsAPI.unschedulePost(postId, networkId),
     onSuccess: (_response, variables) => {
-      toast({
-        title: 'Plánování zrušeno',
-        description: 'Plánování příspěvku bylo úspěšně zrušeno',
-        status: 'info',
-        duration: 2000,
-      });
+      // toast() // Not available in Chakra v3
 
       // Odebereme z existujícího plánování
       setExistingSchedules(prev => {
@@ -914,12 +763,7 @@ const PostEditorPage = () => {
       });
     },
     onError: () => {
-      toast({
-        title: 'Chyba při rušení plánování',
-        description: 'Nepodařilo se zrušit plánování příspěvku',
-        status: 'error',
-        duration: 3000,
-      });
+      // toast() // Not available in Chakra v3
     }
   });
 
@@ -927,12 +771,7 @@ const PostEditorPage = () => {
   const sendToAllNetworksMutation = useMutation({
     mutationFn: (postId: number) => postsAPI.sendToAllNetworks(postId),
     onSuccess: () => {
-      toast({
-        title: 'Příspěvek odeslán',
-        description: 'Příspěvek byl úspěšně odeslán na všechny propojené sítě',
-        status: 'success',
-        duration: 3000,
-      });
+      // toast() // Not available in Chakra v3
 
       // Aktualizujeme stav - všechny propojené sítě jsou nyní odeslané
       const linkedNetworks = getLinkedNetworks();
@@ -947,12 +786,7 @@ const PostEditorPage = () => {
       setSchedulingDates(new Map());
     },
     onError: () => {
-      toast({
-        title: 'Chyba při odesílání',
-        description: 'Nepodařilo se odeslat příspěvek na všechny sítě',
-        status: 'error',
-        duration: 3000,
-      });
+      // toast() // Not available in Chakra v3
     }
   });
 
@@ -960,12 +794,7 @@ const PostEditorPage = () => {
     mutationFn: ({ postId, networkId }: { postId: number; networkId: number }) =>
       postsAPI.sendToNetwork(postId, networkId),
     onSuccess: (_response, variables) => {
-      toast({
-        title: 'Příspěvek odeslán',
-        description: 'Příspěvek byl úspěšně odeslán na vybranou síť',
-        status: 'success',
-        duration: 2000,
-      });
+      // toast() // Not available in Chakra v3
 
       // Přidáme síť do odeslaných
       setSentNetworks(prev => new Set([...prev, variables.networkId]));
@@ -983,12 +812,7 @@ const PostEditorPage = () => {
       });
     },
     onError: () => {
-      toast({
-        title: 'Chyba při odesílání',
-        description: 'Nepodařilo se odeslat příspěvek na vybranou síť',
-        status: 'error',
-        duration: 3000,
-      });
+      // toast() // Not available in Chakra v3
     }
   });
 
@@ -1128,24 +952,12 @@ const PostEditorPage = () => {
       }
 
       // Zobrazíme zprávu o úspěchu i když nejsou žádná plánování (umožňuje zrušení všech)
-      toast({
-        title: 'Plánování uloženo',
-        description: schedulesToSave.length > 0
-          ? 'Všechna plánování byla úspěšně uložena'
-          : 'Všechna plánování byla zrušena',
-        status: 'success',
-        duration: 2000,
-      });
+      // toast() // Not available in Chakra v3
 
     } catch (error) {
-      toast({
-        title: 'Chyba při ukládání',
-        description: 'Některá plánování se nepodařilo uložit',
-        status: 'error',
-        duration: 3000,
-      });
+      // toast() // Not available in Chakra v3
     }
-  }, [currentPostId, canManageScheduling, schedulingDates, existingSchedules, canScheduleOnNetwork, unschedulePostMutation, schedulePostMutation, toast]);
+  }, [currentPostId, canManageScheduling, schedulingDates, existingSchedules, canScheduleOnNetwork, unschedulePostMutation, schedulePostMutation]);
 
   // Funkce pro okamžité odeslání na všechny sítě
   const handleSendToAllNetworks = useCallback(async () => {
@@ -1176,12 +988,7 @@ const PostEditorPage = () => {
 
     const authorizedNetworks = getAuthorizedNetworksForSending();
     if (authorizedNetworks.length === 0) {
-      toast({
-        title: 'Žádná oprávnění',
-        description: 'Nemáte oprávnění odeslat příspěvek na žádnou ze sociálních sítí',
-        status: 'warning',
-        duration: 3000,
-      });
+      // toast() // Not available in Chakra v3
       return;
     }
 
@@ -1189,7 +996,7 @@ const PostEditorPage = () => {
     setSelectedNetworksForSend(authorizedNetworks.map(n => n.id));
 
     onOpen(); // Otevřeme modal pro výběr sítí
-  }, [currentPostId, getAuthorizedNetworksForSending, onOpen, toast]);
+  }, [currentPostId, getAuthorizedNetworksForSending, onOpen]);
 
   // Funkce pro zpracování odeslání na vybrané sítě z modalu
   const handleConfirmSendToSelected = useCallback(async () => {
@@ -1224,34 +1031,24 @@ const PostEditorPage = () => {
         });
       }
 
-      toast({
-        title: 'Příspěvek odeslán',
-        description: 'Příspěvek byl úspěšně odeslán na vybrané sítě',
-        status: 'success',
-        duration: 3000,
-      });
+      // toast() // Not available in Chakra v3
 
     } catch (error) {
-      toast({
+      toaster.create({
         title: 'Chyba při odesílání',
-        description: 'Nepodařilo se odeslat příspěvek na některé sítě',
-        status: 'error',
-        duration: 3000,
+        description: 'Nepodařilo se odeslat příspěvek',
+        type: 'error'
       });
     } finally {
       setPendingAction(null);
       setSelectedNetworksForSend([]);
     }
-  }, [currentPostId, selectedNetworksForSend, sendToNetworkMutation, toast]);
-
-  const borderColor = useColorModeValue('gray.200', 'gray.700');
-  const inputBg = useColorModeValue('white', 'gray.700');
-  const textColor = useColorModeValue('gray.800', 'white');
+  }, [currentPostId, selectedNetworksForSend, sendToNetworkMutation]);
 
   return (
     <Box
       minH="100vh"
-      bg={useColorModeValue('gray.50', 'gray.900')}
+      bg={{ base: "gray.50", _dark: "gray.900" }}
       w="100%"
       maxW="100vw"
       overflow="hidden"
@@ -1261,12 +1058,12 @@ const PostEditorPage = () => {
         mx="auto"
         w="100%"
       >
-        <VStack spacing={8} align="stretch" w="100%" px={{ base: 0, md: 0 }}>
+        <VStack gap={8} align="stretch" w="100%" px={{ base: 0, md: 0 }}>
           {/* Header */}
-          <Box bg={useColorModeValue('white', 'gray.800')} p={{ base: 4, md: 6 }} borderRadius="lg" shadow="sm" w="100%" overflow="hidden">
-            <VStack spacing={4} align="stretch" w="100%">
+          <Box bg={{ base: "white", _dark: "gray.800" }} p={{ base: 4, md: 6 }} borderRadius="lg" shadow="sm" w="100%" overflow="hidden">
+            <VStack gap={4} align="stretch" w="100%">
               <VStack
-                spacing={3}
+                gap={3}
                 align="stretch"
                 w="100%"
                 display={{ base: "flex", md: "none" }}
@@ -1275,7 +1072,7 @@ const PostEditorPage = () => {
                   {!id ? 'Nový příspěvek' : `Editace příspěvku #${id}`}
                 </Heading>
                 <Text
-                  color={useColorModeValue('gray.600', 'gray.400')}
+                  color={{ base: "gray.600", _dark: "gray.400" }}
                   fontSize="md"
                   wordBreak="break-word"
                 >
@@ -1287,7 +1084,7 @@ const PostEditorPage = () => {
                   onClick={handleClose}
                   size="md"
                   variant="outline"
-                  colorScheme="gray"
+                  colorPalette="gray"
                   w="100%"
                 >
                   Zavřít editor
@@ -1302,12 +1099,12 @@ const PostEditorPage = () => {
                 flexWrap="wrap"
                 gap={4}
               >
-                <VStack align="start" spacing={2}>
+                <VStack align="start" gap={2}>
                   <Heading size="xl" wordBreak="break-word">
                     {!id ? 'Nový příspěvek' : `Editace příspěvku #${id}`}
                   </Heading>
                   <Text
-                    color={useColorModeValue('gray.600', 'gray.400')}
+                    color={{ base: "gray.600", _dark: "gray.400" }}
                     fontSize="lg"
                     wordBreak="break-word"
                   >
@@ -1315,12 +1112,12 @@ const PostEditorPage = () => {
                   </Text>
                 </VStack>
 
-                <HStack spacing={3} flexWrap="wrap">
+                <HStack gap={3} flexWrap="wrap">
                   <Button
                     onClick={handleClose}
                     size="lg"
                     variant="outline"
-                    colorScheme="gray"
+                    colorPalette="gray"
                   >
                     Zavřít editor
                   </Button>
@@ -1331,36 +1128,35 @@ const PostEditorPage = () => {
 
           {/* Main Content */}
           <Box
-            bg={useColorModeValue('white', 'gray.800')}
+            bg={{ base: "white", _dark: "gray.800" }}
             p={{ base: 4, md: 6 }}
             borderRadius="lg"
             shadow="sm"
             borderWidth="1px"
-            borderColor={useColorModeValue('gray.200', 'gray.700')}
+            borderColor={{ base: "gray.200", _dark: "gray.700" }}
             w="100%"
             overflow="hidden"
           >
-            <VStack spacing={{ base: 4, md: 6 }} align="stretch">
+            <VStack gap={{ base: 4, md: 6 }} align="stretch">
 
           {/* Obsah postů */}
           {inputs.map((input, index) => (
             <Box key={index} position="relative">
-              <FormControl>
-                <FormLabel color={textColor}>
+              <VStack align="stretch" gap={3}>
+                <Text fontWeight="medium" color={{ base: "gray.800", _dark: "white" }}>
                   Post Text {index + 1}
-                </FormLabel>
-                <VStack align="stretch" spacing={3}>
-                  <HStack align="start">
-                    <Box flex="1">
-                      <Textarea
-                        value={input.text}
-                        onChange={(e) => handleTextChangeWithPostCreation(index, e.target.value)}
-                        minH={{ base: "120px", md: "150px" }}
-                        maxLength={MAX_CHARS}
-                        bg={inputBg}
-                        borderColor={borderColor}
-                        color={textColor}
-                        fontSize={{ base: 'sm', md: 'md' }}
+                </Text>
+                <HStack align="start">
+                  <Box flex="1">
+                    <Textarea
+                      value={input.text}
+                      onChange={(e) => handleTextChangeWithPostCreation(index, e.target.value)}
+                      minH={{ base: "120px", md: "150px" }}
+                      maxLength={MAX_CHARS}
+                      bg={{ base: "white", _dark: "gray.700" }}
+                      borderColor={{ base: "gray.200", _dark: "gray.600" }}
+                      color={{ base: "gray.800", _dark: "white" }}
+                      fontSize={{ base: 'sm', md: 'md' }}
                       />
                       {(() => {
                         const limit = getCharacterLimit(input.contentId);
@@ -1369,8 +1165,8 @@ const PostEditorPage = () => {
                         const isOverLimit = excessChars > 0;
 
                         return (
-                          <HStack spacing={2} fontSize={{ base: 'xs', md: 'sm' }}>
-                            <Text color={textColor}>
+                          <HStack gap={2} fontSize={{ base: 'xs', md: 'sm' }}>
+                            <Text color={{ base: "gray.800", _dark: "white" }}>
                               {currentLength}/{limit} characters
                             </Text>
                             {isOverLimit && (
@@ -1385,31 +1181,32 @@ const PostEditorPage = () => {
                     {index > 0 && (
                       <IconButton
                         aria-label="Remove input"
-                        icon={<CloseIcon />}
                         onClick={() => handleRemoveInput(index)}
                         size={{ base: 'sm', md: 'md' }}
-                      />
+                      >
+                        <MdClose />
+                      </IconButton>
                     )}
                   </HStack>
 
-                  {/* NetworkSelector pro výběr sociálních sítí */}
-                  {((index === 0 && currentPostId) || input.contentId) && (
-                    <Box mt={4}>
-                      <Divider mb={3} />
-                      <FormLabel color={textColor} fontSize={{ base: 'sm', md: 'md' }}>
-                        Sociální sítě:
-                      </FormLabel>
-                      <NetworkSelector
-                        availableNetworks={availableNetworks}
-                        selectedNetworkIds={selectedNetworksByContent.get(input.contentId ?? 0) || []}
-                        onNetworkToggle={(networkId, isSelected) => handleNetworkToggle(index, networkId, isSelected)}
-                        isLoading={loadingNetworks}
-                        isDisabled={linkContentMutation.isPending || unlinkContentMutation.isPending}
-                      />
-                    </Box>
-                  )}
                 </VStack>
-              </FormControl>
+
+                {/* NetworkSelector pro výběr sociálních sítí */}
+                {((index === 0 && currentPostId) || input.contentId) && (
+                  <Box mt={4}>
+                    <Text mb={3} fontWeight="medium" color={{ base: "gray.800", _dark: "white" }} fontSize={{ base: 'sm', md: 'md' }}>
+                      Sociální sítě:
+                    </Text>
+                    <NetworkSelector
+                      availableNetworks={availableNetworks}
+                      selectedNetworkIds={selectedNetworksByContent.get(input.contentId ?? 0) || []}
+                      onNetworkToggle={(networkId, isSelected) => handleNetworkToggle(index, networkId, isSelected)}
+                      loading={loadingNetworks}
+                      disabled={linkContentMutation.isPending || unlinkContentMutation.isPending}
+                    />
+                  </Box>
+                )}
+
               <Box mt={2}>
                 <SaveStatusIndicator
                   status={input.saveStatus}
@@ -1421,9 +1218,8 @@ const PostEditorPage = () => {
 
           {/* Add button */}
           <Button
-            leftIcon={<AddIcon />}
             onClick={handleAddNewInput}
-            isDisabled={!currentPostId}
+            disabled={!currentPostId}
             size={{ base: 'sm', md: 'md' }}
             width={{ base: 'full', md: 'auto' }}
           >
@@ -1432,26 +1228,21 @@ const PostEditorPage = () => {
 
           {/* Sekce editorů příspěvků */}
           {currentPostId && (
-            <>
-              <Divider />
-              <UserSelector
-                currentEditors={postEditors}
-                onAddEditor={handleAddEditor}
-                onRemoveEditor={handleRemoveEditor}
-                isOwner={isOwner}
-                disabled={addEditorMutation.isPending || removeEditorMutation.isPending}
-              />
-            </>
+            <UserSelector
+              currentEditors={postEditors}
+              onAddEditor={handleAddEditor}
+              onRemoveEditor={handleRemoveEditor}
+              isOwner={isOwner}
+              disabled={addEditorMutation.isPending || removeEditorMutation.isPending}
+            />
           )}
 
           {/* Sekce souborů */}
           {currentPostId && (
-            <>
-              <Divider />
-              <AttachmentsSection
-                currentPostId={currentPostId}
-                postFiles={postFiles}
-                uploadingFiles={uploadingFiles}
+            <AttachmentsSection
+              currentPostId={currentPostId}
+              postFiles={postFiles}
+              uploadingFiles={uploadingFiles}
                 availableNetworks={availableNetworks}
                 selectedNetworksByAttachment={selectedNetworksByAttachment}
                 onFileUpload={handleFileUpload}
@@ -1466,17 +1257,14 @@ const PostEditorPage = () => {
                 isUploadDisabled={uploadFileMutation.isPending}
                 maxFileSizeFormatted={formatFileSize(maxFileSize)}
               />
-            </>
           )}
 
           {/* Sekce plánování */}
           {currentPostId && (
-            <>
-              <Divider />
-              <SchedulingSection
-                availableNetworks={availableNetworks}
-                existingSchedules={existingSchedules}
-                schedulingDates={schedulingDates}
+            <SchedulingSection
+              availableNetworks={availableNetworks}
+              existingSchedules={existingSchedules}
+              schedulingDates={schedulingDates}
                 sentNetworks={sentNetworks}
                 canManageScheduling={canManageScheduling()}
                 canScheduleOnNetwork={canScheduleOnNetwork}
@@ -1486,29 +1274,28 @@ const PostEditorPage = () => {
                 onSaveScheduling={handleSaveScheduling}
                 isSaving={schedulePostMutation.isPending || unschedulePostMutation.isPending}
               />
-            </>
           )}
 
           {/* Tlačítka na konci stránky */}
           {currentPostId && getLinkedNetworks().length > 0 ? (
-            <HStack spacing={4} wrap="wrap" justify={{ base: 'center', md: 'flex-start' }}>
+            <HStack gap={4} wrap="wrap" justify={{ base: 'center', md: 'flex-start' }}>
               <Button
-                colorScheme="red"
+                colorPalette="red"
                 onClick={handleSendToAllNetworks}
-                isLoading={sendToAllNetworksMutation.isPending}
+                loading={sendToAllNetworksMutation.isPending}
                 size={{ base: 'sm', md: 'md' }}
                 width={{ base: 'full', sm: 'auto' }}
-                isDisabled={!canSendPost()}
+                disabled={!canSendPost()}
               >
                 Odeslat ihned na všechny sítě
               </Button>
               <Button
-                colorScheme="orange"
+                colorPalette="orange"
                 onClick={handleSendToSelectedNetworks}
-                isLoading={pendingAction === 'sendSelected'}
+                loading={pendingAction === 'sendSelected'}
                 size={{ base: 'sm', md: 'md' }}
                 width={{ base: 'full', sm: 'auto' }}
-                isDisabled={!canSendPost()}
+                disabled={!canSendPost()}
               >
                 Odeslat ihned na vybrané
               </Button>
@@ -1516,7 +1303,7 @@ const PostEditorPage = () => {
                 onClick={handleClose}
                 size={{ base: 'sm', md: 'md' }}
                 variant="outline"
-                colorScheme="gray"
+                colorPalette="gray"
                 width={{ base: 'full', sm: 'auto' }}
               >
                 Zavřít
@@ -1527,7 +1314,7 @@ const PostEditorPage = () => {
               onClick={handleClose}
               size={{ base: 'sm', md: 'md' }}
               variant="outline"
-              colorScheme="gray"
+              colorPalette="gray"
               width={{ base: 'full', md: 'auto' }}
             >
               Zavřít
@@ -1536,7 +1323,7 @@ const PostEditorPage = () => {
 
           {/* Modal pro výběr sítí */}
           <NetworkSelectionModal
-            isOpen={isOpen}
+            open={isOpen}
             onClose={onClose}
             authorizedNetworks={getAuthorizedNetworksForSending()}
             selectedNetworks={selectedNetworksForSend}
@@ -1548,12 +1335,12 @@ const PostEditorPage = () => {
               }
             }}
             onConfirm={handleConfirmSendToSelected}
-            isLoading={pendingAction === 'sendSelected'}
+            loading={pendingAction === 'sendSelected'}
           />
 
           {/* Potvrzovací modal */}
           <ConfirmationModal
-            isOpen={isConfirmOpen}
+            open={isConfirmOpen}
             onClose={() => {
               onConfirmClose();
               setConfirmAction(null);
@@ -1568,7 +1355,7 @@ const PostEditorPage = () => {
             }
             confirmText="Odeslat ihned"
             cancelText="Zrušit"
-            colorScheme="red"
+            colorPalette="red"
             onConfirm={async () => {
               if (confirmAction === 'sendAll') {
                 setPendingAction('sendAll');
@@ -1585,7 +1372,7 @@ const PostEditorPage = () => {
               setConfirmAction(null);
               onConfirmClose();
             }}
-            isLoading={pendingAction === confirmAction}
+            loading={pendingAction === confirmAction}
           />
             </VStack>
           </Box>

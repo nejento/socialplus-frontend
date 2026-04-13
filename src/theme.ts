@@ -1,33 +1,12 @@
-import { extendTheme, type ThemeConfig } from '@chakra-ui/react';
+// Chakra UI v3 používá defaultní theme systém s novým přístupem
+// extendTheme a ThemeConfig již nejsou dostupné ve v3
 
-const config: ThemeConfig = {
-  initialColorMode: 'system',
-  useSystemColorMode: true,
-};
+// Pro Chakra UI v3 není potřeba explicitní theme konfigurace
+// Color mode se spravuje automaticky přes CSS custom properties
 
-const theme = extendTheme({
-  config,
-  styles: {
-    global: (props: any) => ({
-      body: {
-        bg: props.colorMode === 'dark' ? 'gray.900' : 'gray.50',
-      },
-    }),
-  },
-  colors: {
-    brand: {
-      50: '#e3f2fd',
-      100: '#bbdefb',
-      200: '#90caf9',
-      300: '#64b5f6',
-      400: '#42a5f5',
-      500: '#2196f3',
-      600: '#1e88e5',
-      700: '#1976d2',
-      800: '#1565c0',
-      900: '#0d47a1',
-    },
-  },
-});
+// Pokud potřebujete custom barvy, použijte CSS custom properties:
+// :root {
+//   --colors-brand-500: #2196f3;
+// }
 
-export default theme;
+export default {};

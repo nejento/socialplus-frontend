@@ -1,26 +1,23 @@
 import React, { useState } from 'react';
 import {
-  Modal,
-  ModalOverlay,
-  ModalContent,
-  ModalHeader,
-  ModalBody,
-  ModalCloseButton,
-  ModalFooter,
+  DialogRoot,
+  DialogBackdrop,
+  DialogContent,
+  DialogPositioner,
+  DialogHeader,
+  DialogBody,
+  DialogCloseTrigger,
+  DialogFooter,
   VStack,
-  Alert,
-  AlertIcon,
   Text,
   Button,
-  FormControl,
-  FormLabel,
+  Field,
   Input,
-  InputGroup,
-  InputRightElement,
   IconButton,
-  FormErrorMessage,
+  Box,
+  Icon
 } from '@chakra-ui/react';
-import { ViewIcon, ViewOffIcon } from '@chakra-ui/icons';
+import { MdVisibility, MdVisibilityOff } from 'react-icons/md';
 import { useForm } from 'react-hook-form';
 import { NetworkType } from '@/types';
 
@@ -58,19 +55,19 @@ interface BlueskyTokenForm {
 type TokenFormData = FacebookTokenForm | TwitterTokenForm | ThreadsTokenForm | MastodonTokenForm | BlueskyTokenForm;
 
 interface NetworkTokenModalProps {
-  isOpen: boolean;
+  open: boolean;
   onClose: () => void;
   networkType: NetworkType;
   onSubmit: (data: TokenFormData) => Promise<void>;
-  isLoading?: boolean;
+  loading?: boolean;
 }
 
 const NetworkTokenModal: React.FC<NetworkTokenModalProps> = ({
-  isOpen,
+  open,
   onClose,
   networkType,
   onSubmit,
-  isLoading = false,
+  loading= false
 }) => {
   const [showToken, setShowToken] = useState(false);
 
@@ -121,17 +118,22 @@ const NetworkTokenModal: React.FC<NetworkTokenModalProps> = ({
     switch (networkType) {
       case 'facebook':
         return (
-          <VStack spacing={4} align="stretch">
-            <Alert status="info" borderRadius="md">
-              <AlertIcon />
-              <VStack align="start" spacing={2} flex={1}>
+          <VStack gap={4} align="stretch">
+            <Box
+              p={3}
+              bg={{ base: "blue.50", _dark: "blue.900" }}
+              borderRadius="md"
+              borderWidth="1px"
+              borderColor={{ base: "blue.200", _dark: "blue.700" }}
+            >
+              <VStack align="start" gap={2}>
                 <Text fontSize="sm" fontWeight="medium">
                   Facebook Token Configuration
                 </Text>
                 <Text fontSize="sm">
                   Pro správné fungování potřebujeme přístup k Facebook Graph API.
                   <Button
-                    variant="link"
+                    variant="plain"
                     size="sm"
                     color="blue.500"
                     onClick={() => window.open(getHelpUrl(), '_blank')}
@@ -140,103 +142,112 @@ const NetworkTokenModal: React.FC<NetworkTokenModalProps> = ({
                   </Button> jak získat potřebné údaje.
                 </Text>
               </VStack>
-            </Alert>
+            </Box>
 
-            <FormControl isRequired>
-              <FormLabel>App ID</FormLabel>
+            <Field.Root required>
+              <Field.Label>App ID</Field.Label>
               <Input
                 {...register('appId', {
-                  required: 'Zadejte prosím App ID',
+                  required: 'Zadejte prosím App ID'
                 })}
                 placeholder="Např. 1234567890123456"
-                isInvalid={!!errors.appId}
               />
-              <FormErrorMessage>
+              <Field.ErrorText>
                 {errors.appId?.message as string}
-              </FormErrorMessage>
-            </FormControl>
+              </Field.ErrorText>
+            </Field.Root>
 
-            <FormControl isRequired>
-              <FormLabel>App Secret</FormLabel>
-              <InputGroup>
+            <Field.Root required>
+              <Field.Label>App Secret</Field.Label>
+              <Box position="relative">
                 <Input
                   {...register('appSecret', {
-                    required: 'Zadejte prosím App Secret',
+                    required: 'Zadejte prosím App Secret'
                   })}
                   placeholder="Např. abc123def456..."
                   type={showToken ? 'text' : 'password'}
-                  isInvalid={!!errors.appSecret}
+                  pr="12"
                 />
-                <InputRightElement>
-                  <IconButton
-                    aria-label={showToken ? "Skrýt token" : "Zobrazit token"}
-                    icon={showToken ? <ViewOffIcon /> : <ViewIcon />}
-                    size="sm"
-                    variant="link"
-                    onClick={() => setShowToken(!showToken)}
-                  />
-                </InputRightElement>
-              </InputGroup>
-              <FormErrorMessage>
+                <IconButton
+                  aria-label={showToken ? "Skrýt token" : "Zobrazit token"}
+                  size="sm"
+                  variant="ghost"
+                  onClick={() => setShowToken(!showToken)}
+                  position="absolute"
+                  right={2}
+                  top="50%"
+                  transform="translateY(-50%)"
+                >
+                  {showToken ? <Icon as={MdVisibilityOff} /> : <Icon as={MdVisibility} />}
+                </IconButton>
+              </Box>
+              <Field.ErrorText>
                 {errors.appSecret?.message as string}
-              </FormErrorMessage>
-            </FormControl>
+              </Field.ErrorText>
+            </Field.Root>
 
-            <FormControl isRequired>
-              <FormLabel>Page ID</FormLabel>
+            <Field.Root required>
+              <Field.Label>Page ID</Field.Label>
               <Input
                 {...register('pageId', {
-                  required: 'Zadejte prosím Page ID',
+                  required: 'Zadejte prosím Page ID'
                 })}
                 placeholder="Např. 1234567890123456"
-                isInvalid={!!errors.pageId}
               />
-              <FormErrorMessage>
+              <Field.ErrorText>
                 {errors.pageId?.message as string}
-              </FormErrorMessage>
-            </FormControl>
+              </Field.ErrorText>
+            </Field.Root>
 
-            <FormControl isRequired>
-              <FormLabel>Short-lived User Access Token</FormLabel>
-              <InputGroup>
+            <Field.Root required>
+              <Field.Label>Short-lived User Access Token</Field.Label>
+              <Box position="relative">
                 <Input
                   {...register('shortLivedUserAccessToken', {
-                    required: 'Zadejte prosím short-lived token',
+                    required: 'Zadejte prosím short-lived token'
                   })}
                   placeholder="Např. EAAG..."
                   type={showToken ? 'text' : 'password'}
-                  isInvalid={!!errors.shortLivedUserAccessToken}
+                  pr="12"
                 />
-                <InputRightElement>
-                  <IconButton
-                    aria-label={showToken ? "Skrýt token" : "Zobrazit token"}
-                    icon={showToken ? <ViewOffIcon /> : <ViewIcon />}
-                    size="sm"
-                    variant="link"
-                    onClick={() => setShowToken(!showToken)}
-                  />
-                </InputRightElement>
-              </InputGroup>
-              <FormErrorMessage>
+                <IconButton
+                  aria-label={showToken ? "Skrýt token" : "Zobrazit token"}
+                  size="sm"
+                  variant="ghost"
+                  onClick={() => setShowToken(!showToken)}
+                  position="absolute"
+                  right={2}
+                  top="50%"
+                  transform="translateY(-50%)"
+                >
+                  {showToken ? <Icon as={MdVisibilityOff} /> : <Icon as={MdVisibility} />}
+                </IconButton>
+              </Box>
+              <Field.ErrorText>
                 {errors.shortLivedUserAccessToken?.message as string}
-              </FormErrorMessage>
-            </FormControl>
+              </Field.ErrorText>
+            </Field.Root>
           </VStack>
         );
 
       case 'twitter':
         return (
-          <VStack spacing={4} align="stretch">
-            <Alert status="info" borderRadius="md">
-              <AlertIcon />
-              <VStack align="start" spacing={2} flex={1}>
+          <VStack gap={4} align="stretch">
+            <Box
+              p={3}
+              bg={{ base: "blue.50", _dark: "blue.900" }}
+              borderRadius="md"
+              borderWidth="1px"
+              borderColor={{ base: "blue.200", _dark: "blue.700" }}
+            >
+              <VStack align="start" gap={2}>
                 <Text fontSize="sm" fontWeight="medium">
                   Twitter API Configuration
                 </Text>
                 <Text fontSize="sm">
                   Pro připojení k Twitter API potřebujeme přístupové údaje z Twitter Developer portálu.
                   <Button
-                    variant="link"
+                    variant="plain"
                     size="sm"
                     color="blue.500"
                     onClick={() => window.open(getHelpUrl(), '_blank')}
@@ -245,115 +256,128 @@ const NetworkTokenModal: React.FC<NetworkTokenModalProps> = ({
                   </Button> jak je získat.
                 </Text>
               </VStack>
-            </Alert>
+            </Box>
 
-            <FormControl isRequired>
-              <FormLabel>Consumer Key (API Key)</FormLabel>
+            <Field.Root required>
+              <Field.Label>Consumer Key (API Key)</Field.Label>
               <Input
                 {...register('apiKey', {
-                  required: 'Zadejte prosím Consumer Key',
+                  required: 'Zadejte prosím Consumer Key'
                 })}
                 placeholder="Např. abc123..."
-                isInvalid={!!errors.apiKey}
               />
-              <FormErrorMessage>
+              <Field.ErrorText>
                 {errors.apiKey?.message as string}
-              </FormErrorMessage>
-            </FormControl>
+              </Field.ErrorText>
+            </Field.Root>
 
-            <FormControl isRequired>
-              <FormLabel>Consumer Secret (API Secret)</FormLabel>
-              <InputGroup>
+            <Field.Root required>
+              <Field.Label>Consumer Secret (API Secret)</Field.Label>
+              <Box position="relative">
                 <Input
                   {...register('apiSecret', {
-                    required: 'Zadejte prosím Consumer Secret',
+                    required: 'Zadejte prosím Consumer Secret'
                   })}
                   placeholder="Např. def456..."
                   type={showToken ? 'text' : 'password'}
-                  isInvalid={!!errors.apiSecret}
+                  pr="12"
                 />
-                <InputRightElement>
-                  <IconButton
-                    aria-label={showToken ? "Skrýt token" : "Zobrazit token"}
-                    icon={showToken ? <ViewOffIcon /> : <ViewIcon />}
-                    size="sm"
-                    variant="link"
-                    onClick={() => setShowToken(!showToken)}
-                  />
-                </InputRightElement>
-              </InputGroup>
-              <FormErrorMessage>
+                <IconButton
+                  aria-label={showToken ? "Skrýt token" : "Zobrazit token"}
+                  size="sm"
+                  variant="ghost"
+                  onClick={() => setShowToken(!showToken)}
+                  position="absolute"
+                  right={2}
+                  top="50%"
+                  transform="translateY(-50%)"
+                >
+                  {showToken ? <Icon as={MdVisibilityOff} /> : <Icon as={MdVisibility} />}
+                </IconButton>
+              </Box>
+              <Field.ErrorText>
                 {errors.apiSecret?.message as string}
-              </FormErrorMessage>
-            </FormControl>
+              </Field.ErrorText>
+            </Field.Root>
 
-            <FormControl isRequired>
-              <FormLabel>Access Token</FormLabel>
-              <InputGroup>
+            <Field.Root required>
+              <Field.Label>Access Token</Field.Label>
+              <Box position="relative">
                 <Input
                   {...register('accessToken', {
-                    required: 'Zadejte prosím Access Token',
+                    required: 'Zadejte prosím Access Token'
                   })}
                   placeholder="Např. 123456789-abc..."
                   type={showToken ? 'text' : 'password'}
-                  isInvalid={!!errors.accessToken}
+                  pr="12"
                 />
-                <InputRightElement>
-                  <IconButton
-                    aria-label={showToken ? "Skrýt token" : "Zobrazit token"}
-                    icon={showToken ? <ViewOffIcon /> : <ViewIcon />}
-                    size="sm"
-                    variant="link"
-                    onClick={() => setShowToken(!showToken)}
-                  />
-                </InputRightElement>
-              </InputGroup>
-              <FormErrorMessage>
+                <IconButton
+                  aria-label={showToken ? "Skrýt token" : "Zobrazit token"}
+                  size="sm"
+                  variant="ghost"
+                  onClick={() => setShowToken(!showToken)}
+                  position="absolute"
+                  right={2}
+                  top="50%"
+                  transform="translateY(-50%)"
+                >
+                  {showToken ? <Icon as={MdVisibilityOff} /> : <Icon as={MdVisibility} />}
+                </IconButton>
+              </Box>
+              <Field.ErrorText>
                 {errors.accessToken?.message as string}
-              </FormErrorMessage>
-            </FormControl>
+              </Field.ErrorText>
+            </Field.Root>
 
-            <FormControl isRequired>
-              <FormLabel>Access Token Secret</FormLabel>
-              <InputGroup>
+            <Field.Root required>
+              <Field.Label>Access Token Secret</Field.Label>
+              <Box position="relative">
                 <Input
                   {...register('accessTokenSecret', {
-                    required: 'Zadejte prosím Access Token Secret',
+                    required: 'Zadejte prosím Access Token Secret'
                   })}
                   placeholder="Např. xyz789..."
                   type={showToken ? 'text' : 'password'}
-                  isInvalid={!!errors.accessTokenSecret}
+                  pr="12"
                 />
-                <InputRightElement>
-                  <IconButton
-                    aria-label={showToken ? "Skrýt token" : "Zobrazit token"}
-                    icon={showToken ? <ViewOffIcon /> : <ViewIcon />}
-                    size="sm"
-                    variant="link"
-                    onClick={() => setShowToken(!showToken)}
-                  />
-                </InputRightElement>
-              </InputGroup>
-              <FormErrorMessage>
+                <IconButton
+                  aria-label={showToken ? "Skrýt token" : "Zobrazit token"}
+                  size="sm"
+                  variant="ghost"
+                  onClick={() => setShowToken(!showToken)}
+                  position="absolute"
+                  right={2}
+                  top="50%"
+                  transform="translateY(-50%)"
+                >
+                  {showToken ? <Icon as={MdVisibilityOff} /> : <Icon as={MdVisibility} />}
+                </IconButton>
+              </Box>
+              <Field.ErrorText>
                 {errors.accessTokenSecret?.message as string}
-              </FormErrorMessage>
-            </FormControl>
+              </Field.ErrorText>
+            </Field.Root>
           </VStack>
         );
 
       case 'threads':
         return (
-          <VStack spacing={4} align="stretch">
-            <Alert status="info" borderRadius="md">
-              <AlertIcon />
-              <VStack align="start" spacing={2} flex={1}>
+          <VStack gap={4} align="stretch">
+            <Box
+              p={3}
+              bg={{ base: "blue.50", _dark: "blue.900" }}
+              borderRadius="md"
+              borderWidth="1px"
+              borderColor={{ base: "blue.200", _dark: "blue.700" }}
+            >
+              <VStack align="start" gap={2}>
                 <Text fontSize="sm" fontWeight="medium">
                   Threads API Configuration
                 </Text>
                 <Text fontSize="sm">
                   Pro přístup k Meta Threads API potřebujeme přístupové údaje z Meta for Developers.
                   <Button
-                    variant="link"
+                    variant="plain"
                     size="sm"
                     color="blue.500"
                     onClick={() => window.open(getHelpUrl(), '_blank')}
@@ -362,89 +386,99 @@ const NetworkTokenModal: React.FC<NetworkTokenModalProps> = ({
                   </Button> jak je získat.
                 </Text>
               </VStack>
-            </Alert>
+            </Box>
 
-            <FormControl isRequired>
-              <FormLabel>Threads User ID</FormLabel>
+            <Field.Root required>
+              <Field.Label>Threads User ID</Field.Label>
               <Input
                 {...register('threadsUserId', {
-                  required: 'Zadejte prosím Threads User ID',
+                  required: 'Zadejte prosím Threads User ID'
                 })}
                 placeholder="Např. 17841470000000000"
-                isInvalid={!!errors.threadsUserId}
               />
-              <FormErrorMessage>
+              <Field.ErrorText>
                 {errors.threadsUserId?.message as string}
-              </FormErrorMessage>
-            </FormControl>
+              </Field.ErrorText>
+            </Field.Root>
 
-            <FormControl isRequired>
-              <FormLabel>App Secret</FormLabel>
-              <InputGroup>
+            <Field.Root required>
+              <Field.Label>App Secret</Field.Label>
+              <Box position="relative">
                 <Input
                   {...register('threadsAppSecret', {
-                    required: 'Zadejte prosím App Secret',
+                    required: 'Zadejte prosím App Secret'
                   })}
                   placeholder="Např. abc123def456..."
                   type={showToken ? 'text' : 'password'}
-                  isInvalid={!!errors.threadsAppSecret}
+                  pr="12"
                 />
-                <InputRightElement>
-                  <IconButton
-                    aria-label={showToken ? "Skrýt token" : "Zobrazit token"}
-                    icon={showToken ? <ViewOffIcon /> : <ViewIcon />}
-                    size="sm"
-                    variant="link"
-                    onClick={() => setShowToken(!showToken)}
-                  />
-                </InputRightElement>
-              </InputGroup>
-              <FormErrorMessage>
+                <IconButton
+                  aria-label={showToken ? "Skrýt token" : "Zobrazit token"}
+                  size="sm"
+                  variant="ghost"
+                  onClick={() => setShowToken(!showToken)}
+                  position="absolute"
+                  right={2}
+                  top="50%"
+                  transform="translateY(-50%)"
+                >
+                  {showToken ? <Icon as={MdVisibilityOff} /> : <Icon as={MdVisibility} />}
+                </IconButton>
+              </Box>
+              <Field.ErrorText>
                 {errors.threadsAppSecret?.message as string}
-              </FormErrorMessage>
-            </FormControl>
+              </Field.ErrorText>
+            </Field.Root>
 
-            <FormControl isRequired>
-              <FormLabel>Long-lived Access Token</FormLabel>
-              <InputGroup>
+            <Field.Root required>
+              <Field.Label>Long-lived Access Token</Field.Label>
+              <Box position="relative">
                 <Input
                   {...register('longLivedAccessToken', {
-                    required: 'Zadejte prosím Long-lived Access Token',
+                    required: 'Zadejte prosím Long-lived Access Token'
                   })}
                   placeholder="Např. TH-..."
                   type={showToken ? 'text' : 'password'}
-                  isInvalid={!!errors.longLivedAccessToken}
+                  pr="12"
                 />
-                <InputRightElement>
-                  <IconButton
-                    aria-label={showToken ? "Skrýt token" : "Zobrazit token"}
-                    icon={showToken ? <ViewOffIcon /> : <ViewIcon />}
-                    size="sm"
-                    variant="link"
-                    onClick={() => setShowToken(!showToken)}
-                  />
-                </InputRightElement>
-              </InputGroup>
-              <FormErrorMessage>
+                <IconButton
+                  aria-label={showToken ? "Skrýt token" : "Zobrazit token"}
+                  size="sm"
+                  variant="ghost"
+                  onClick={() => setShowToken(!showToken)}
+                  position="absolute"
+                  right={2}
+                  top="50%"
+                  transform="translateY(-50%)"
+                >
+                  {showToken ? <Icon as={MdVisibilityOff} /> : <Icon as={MdVisibility} />}
+                </IconButton>
+              </Box>
+              <Field.ErrorText>
                 {errors.longLivedAccessToken?.message as string}
-              </FormErrorMessage>
-            </FormControl>
+              </Field.ErrorText>
+            </Field.Root>
           </VStack>
         );
 
       case 'mastodon':
         return (
-          <VStack spacing={4} align="stretch">
-            <Alert status="info" borderRadius="md">
-              <AlertIcon />
-              <VStack align="start" spacing={2} flex={1}>
+          <VStack gap={4} align="stretch">
+            <Box
+              p={3}
+              bg={{ base: "blue.50", _dark: "blue.900" }}
+              borderRadius="md"
+              borderWidth="1px"
+              borderColor={{ base: "blue.200", _dark: "blue.700" }}
+            >
+              <VStack align="start" gap={2}>
                 <Text fontSize="sm" fontWeight="medium">
                   Mastodon API Configuration
                 </Text>
                 <Text fontSize="sm">
                   Pro připojení k Mastodon instanci potřebujeme URL instance a access token.
                   <Button
-                    variant="link"
+                    variant="plain"
                     size="sm"
                     color="blue.500"
                     onClick={() => window.open(getHelpUrl(), '_blank')}
@@ -453,10 +487,10 @@ const NetworkTokenModal: React.FC<NetworkTokenModalProps> = ({
                   </Button> jak je získat.
                 </Text>
               </VStack>
-            </Alert>
+            </Box>
 
-            <FormControl isRequired>
-              <FormLabel>Instance URL</FormLabel>
+            <Field.Root required>
+              <Field.Label>Instance URL</Field.Label>
               <Input
                 {...register('instanceUrl', {
                   required: 'Zadejte prosím URL instance',
@@ -466,54 +500,61 @@ const NetworkTokenModal: React.FC<NetworkTokenModalProps> = ({
                   }
                 })}
                 placeholder="Např. https://mastodon.social"
-                isInvalid={!!errors.instanceUrl}
               />
-              <FormErrorMessage>
+              <Field.ErrorText>
                 {errors.instanceUrl?.message as string}
-              </FormErrorMessage>
-            </FormControl>
+              </Field.ErrorText>
+            </Field.Root>
 
-            <FormControl isRequired>
-              <FormLabel>Access Token</FormLabel>
-              <InputGroup>
+            <Field.Root required>
+              <Field.Label>Access Token</Field.Label>
+              <Box position="relative">
                 <Input
                   {...register('accessToken', {
-                    required: 'Zadejte prosím Access Token',
+                    required: 'Zadejte prosím Access Token'
                   })}
                   placeholder="Např. abc123def456..."
                   type={showToken ? 'text' : 'password'}
-                  isInvalid={!!errors.accessToken}
+                  pr="12"
                 />
-                <InputRightElement>
-                  <IconButton
-                    aria-label={showToken ? "Skrýt token" : "Zobrazit token"}
-                    icon={showToken ? <ViewOffIcon /> : <ViewIcon />}
-                    size="sm"
-                    variant="link"
-                    onClick={() => setShowToken(!showToken)}
-                  />
-                </InputRightElement>
-              </InputGroup>
-              <FormErrorMessage>
+                <IconButton
+                  aria-label={showToken ? "Skrýt token" : "Zobrazit token"}
+                  size="sm"
+                  variant="ghost"
+                  onClick={() => setShowToken(!showToken)}
+                  position="absolute"
+                  right={2}
+                  top="50%"
+                  transform="translateY(-50%)"
+                >
+                  {showToken ? <Icon as={MdVisibilityOff} /> : <Icon as={MdVisibility} />}
+                </IconButton>
+              </Box>
+              <Field.ErrorText>
                 {errors.accessToken?.message as string}
-              </FormErrorMessage>
-            </FormControl>
+              </Field.ErrorText>
+            </Field.Root>
           </VStack>
         );
 
       case 'bluesky':
         return (
-          <VStack spacing={4} align="stretch">
-            <Alert status="info" borderRadius="md">
-              <AlertIcon />
-              <VStack align="start" spacing={2} flex={1}>
+          <VStack gap={4} align="stretch">
+            <Box
+              p={3}
+              bg={{ base: "blue.50", _dark: "blue.900" }}
+              borderRadius="md"
+              borderWidth="1px"
+              borderColor={{ base: "blue.200", _dark: "blue.700" }}
+            >
+              <VStack align="start" gap={2}>
                 <Text fontSize="sm" fontWeight="medium">
                   Bluesky API Configuration
                 </Text>
                 <Text fontSize="sm">
                   Pro přístup k Bluesky použijte své běžné přihlašovací údaje.
                   <Button
-                    variant="link"
+                    variant="plain"
                     size="sm"
                     color="blue.500"
                     onClick={() => window.open(getHelpUrl(), '_blank')}
@@ -522,90 +563,99 @@ const NetworkTokenModal: React.FC<NetworkTokenModalProps> = ({
                   </Button> pro více informací.
                 </Text>
               </VStack>
-            </Alert>
+            </Box>
 
-            <FormControl isRequired>
-              <FormLabel>Bluesky Handle</FormLabel>
+            <Field.Root required>
+              <Field.Label>Bluesky Handle</Field.Label>
               <Input
                 {...register('handle', {
-                  required: 'Zadejte prosím Bluesky handle',
+                  required: 'Zadejte prosím Bluesky handle'
                 })}
                 placeholder="Např. username.bsky.social"
-                isInvalid={!!errors.handle}
               />
-              <FormErrorMessage>
+              <Field.ErrorText>
                 {errors.handle?.message as string}
-              </FormErrorMessage>
-            </FormControl>
+              </Field.ErrorText>
+            </Field.Root>
 
-            <FormControl isRequired>
-              <FormLabel>Heslo</FormLabel>
-              <InputGroup>
+            <Field.Root required>
+              <Field.Label>Heslo</Field.Label>
+              <Box position="relative">
                 <Input
                   {...register('password', {
-                    required: 'Zadejte prosím heslo',
+                    required: 'Zadejte prosím heslo'
                   })}
                   placeholder="Vaše Bluesky heslo"
                   type={showToken ? 'text' : 'password'}
-                  isInvalid={!!errors.password}
+                  pr="12"
                 />
-                <InputRightElement>
-                  <IconButton
-                    aria-label={showToken ? "Skrýt heslo" : "Zobrazit heslo"}
-                    icon={showToken ? <ViewOffIcon /> : <ViewIcon />}
-                    size="sm"
-                    variant="link"
-                    onClick={() => setShowToken(!showToken)}
-                  />
-                </InputRightElement>
-              </InputGroup>
-              <FormErrorMessage>
+                <IconButton
+                  aria-label={showToken ? "Skrýt heslo" : "Zobrazit heslo"}
+                  size="sm"
+                  variant="ghost"
+                  onClick={() => setShowToken(!showToken)}
+                  position="absolute"
+                  right={2}
+                  top="50%"
+                  transform="translateY(-50%)"
+                >
+                  {showToken ? <Icon as={MdVisibilityOff} /> : <Icon as={MdVisibility} />}
+                </IconButton>
+              </Box>
+              <Field.ErrorText>
                 {errors.password?.message as string}
-              </FormErrorMessage>
-            </FormControl>
+              </Field.ErrorText>
+            </Field.Root>
           </VStack>
         );
 
       default:
         return (
-          <Alert status="warning" borderRadius="md">
-            <AlertIcon />
+          <Box
+            p={3}
+            bg={{ base: "yellow.50", _dark: "yellow.900" }}
+            borderRadius="md"
+            borderWidth="1px"
+            borderColor={{ base: "yellow.200", _dark: "yellow.700" }}
+          >
             <Text fontSize="sm">
               Neznámý typ sociální sítě: {networkType}
             </Text>
-          </Alert>
+          </Box>
         );
     }
   };
 
   return (
-    <Modal isOpen={isOpen} onClose={handleClose} size="lg" scrollBehavior="inside">
-      <ModalOverlay />
-      <ModalContent>
-        <ModalHeader>{getModalTitle()}</ModalHeader>
-        <ModalCloseButton />
+    <DialogRoot open={open} onOpenChange={(e) => !e.open && onClose()} size="lg">
+      <DialogBackdrop />
+      <DialogPositioner>
+        <DialogContent>
+          <DialogHeader>{getModalTitle()}</DialogHeader>
+          <DialogCloseTrigger />
 
-        <form onSubmit={handleSubmit(handleFormSubmit)}>
-          <ModalBody>
-            {renderForm()}
-          </ModalBody>
+          <form onSubmit={handleSubmit(handleFormSubmit)}>
+            <DialogBody>
+              {renderForm()}
+            </DialogBody>
 
-          <ModalFooter>
-            <Button variant="ghost" mr={3} onClick={handleClose}>
-              Zrušit
-            </Button>
-            <Button
-              colorScheme="blue"
-              type="submit"
-              isLoading={isLoading}
-              loadingText="Přidávám..."
-            >
-              Přidat tokeny
-            </Button>
-          </ModalFooter>
-        </form>
-      </ModalContent>
-    </Modal>
+            <DialogFooter gap={3}>
+              <Button variant="ghost" onClick={handleClose}>
+                Zrušit
+              </Button>
+              <Button
+                colorPalette="blue"
+                type="submit"
+                loading={loading}
+                loadingText="Přidávám..."
+              >
+                Přidat tokeny
+              </Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </DialogPositioner>
+    </DialogRoot>
   );
 };
 

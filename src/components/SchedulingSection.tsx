@@ -4,10 +4,13 @@ import {
   Text,
   Box,
   HStack,
-  Checkbox,
+  CheckboxRoot,
+  CheckboxControl,
+  CheckboxLabel,
+  CheckboxHiddenInput,
+  CheckboxIndicator,
   Input,
-  Button,
-  useColorModeValue
+  Button
 } from '@chakra-ui/react';
 import { NetworkInfo } from '@/types';
 
@@ -38,13 +41,9 @@ export const SchedulingSection: React.FC<SchedulingSectionProps> = ({
   onSaveScheduling,
   isSaving
 }) => {
-  const textColor = useColorModeValue('gray.800', 'white');
-  const inputBg = useColorModeValue('white', 'gray.700');
-  const borderColor = useColorModeValue('gray.200', 'gray.700');
-
   return (
-    <VStack align="stretch" spacing={4}>
-      <Text fontSize="lg" fontWeight="semibold" color={textColor}>
+    <VStack align="stretch" gap={4}>
+      <Text fontSize="lg" fontWeight="semibold" color={{ base: 'gray.800', _dark: 'white' }}>
         Plánování příspěvku
       </Text>
 
@@ -54,19 +53,19 @@ export const SchedulingSection: React.FC<SchedulingSectionProps> = ({
           p={4}
           borderWidth="1px"
           borderRadius="md"
-          borderColor={useColorModeValue('green.200', 'green.600')}
-          bg={useColorModeValue('green.50', 'green.900')}
+          borderColor={{ base: 'green.200', _dark: 'green.600' }}
+          bg={{ base: 'green.50', _dark: 'green.900' }}
         >
-          <Text fontSize="sm" color={useColorModeValue('green.800', 'green.200')}>
+          <Text fontSize="sm" color={{ base: 'green.800', _dark: 'green.200' }}>
             Tento příspěvek je již naplánován na následující sítě:
           </Text>
-          <VStack spacing={2} align="stretch" mt={2}>
+          <VStack gap={2} align="stretch" mt={2}>
             {Array.from(existingSchedules.entries()).map(([networkId, postDate]) => (
               <HStack key={networkId} justify="space-between">
-                <Text fontSize="sm" color={textColor}>
+                <Text fontSize="sm" color={{ base: 'gray.800', _dark: 'white' }}>
                   {availableNetworks.find(network => network.id === networkId)?.networkName || 'Neznámá síť'}
                 </Text>
-                <Text fontSize="sm" color={textColor}>
+                <Text fontSize="sm" color={{ base: 'gray.800', _dark: 'white' }}>
                   {new Date(postDate).toLocaleString()}
                 </Text>
               </HStack>
@@ -77,7 +76,7 @@ export const SchedulingSection: React.FC<SchedulingSectionProps> = ({
 
       {/* Kontrola oprávnění */}
       {!canManageScheduling && existingSchedules.size === 0 && (
-        <Text fontSize="sm" color={useColorModeValue('gray.600', 'gray.400')} fontStyle="italic">
+        <Text fontSize="sm" color={{ base: 'gray.600', _dark: 'gray.400' }} fontStyle="italic">
           Tento příspěvek není naplánován na žádné sociální síti.
         </Text>
       )}
@@ -85,48 +84,64 @@ export const SchedulingSection: React.FC<SchedulingSectionProps> = ({
       {/* Ovládací prvky pro plánování */}
       {canManageScheduling && (
         <>
-          <VStack spacing={4} align="stretch">
-            <Text fontSize="sm" color={textColor}>
+          <VStack gap={4} align="stretch">
+            <Text fontSize="sm" color={{ base: 'gray.800', _dark: 'white' }}>
               {getLinkedNetworks().length > 0
                 ? "Vyberte datum a čas pro plánování příspěvku na jednotlivých sítích:"
                 : "Nejprve připojte příspěvek k sociálním sítím, abyste mohli nastavit plánování."
               }
             </Text>
             {getLinkedNetworks().map(network => (
-              <HStack key={network.id} spacing={4} align="start">
-                <Checkbox
-                  isChecked={schedulingDates.has(network.id)}
-                  onChange={(e) => {
-                    if (e.target.checked) {
+              <HStack key={network.id} gap={4} align="start" width="100%">
+                <CheckboxRoot
+                  checked={schedulingDates.has(network.id)}
+                  onCheckedChange={(details) => {
+                    if (details.checked) {
                       const defaultDate = new Date(Date.now() + 60 * 60 * 1000).toISOString();
                       onScheduleDateChange(network.id, defaultDate);
                     } else {
                       onScheduleDateChange(network.id, '');
                     }
                   }}
-                  colorScheme="blue"
-                  isDisabled={!canScheduleOnNetwork(network.id)}
+                  colorPalette="blue"
+                  disabled={!canScheduleOnNetwork(network.id)}
                 >
-                  <Text fontSize="sm" color={textColor}>
-                    {network.networkName}
-                    {!canScheduleOnNetwork(network.id) && (
-                      <Text as="span" fontSize="xs" color="gray.500" ml={2}>
-                        (nemáte oprávnění)
-                      </Text>
-                    )}
-                  </Text>
-                </Checkbox>
+                  <CheckboxHiddenInput />
+                  <CheckboxControl>
+                    <CheckboxIndicator />
+                  </CheckboxControl>
+                  <CheckboxLabel>
+                    <Text fontSize="sm" fontWeight="medium">
+                      {network.networkName}
+                      {sentNetworks.has(network.id) && (
+                        <Text as="span" fontSize="xs" color={{ base: "gray.500", _dark: "gray.400" }} ml={2}>
+                          (odesláno)
+                        </Text>
+                      )}
+                      {!canScheduleOnNetwork(network.id) && !sentNetworks.has(network.id) && (
+                        <Text as="span" fontSize="xs" color={{ base: "gray.500", _dark: "gray.400" }} ml={2}>
+                          (nemáte oprávnění)
+                        </Text>
+                      )}
+                    </Text>
+                  </CheckboxLabel>
+                </CheckboxRoot>
                 {schedulingDates.has(network.id) && canScheduleOnNetwork(network.id) && (
                   <Input
                     type="datetime-local"
-                    value={schedulingDates.get(network.id)?.slice(0, 16)}
+                    value={schedulingDates.get(network.id)?.slice(0, 16) || ''}
                     onChange={(e) => onScheduleDateChange(network.id, e.target.value)}
                     size="sm"
                     width="auto"
-                    bg={inputBg}
-                    borderColor={borderColor}
-                    color={textColor}
+                    bg={{ base: 'white', _dark: 'gray.700' }}
+                    borderColor={{ base: 'gray.200', _dark: 'gray.600' }}
+                    color={{ base: 'gray.800', _dark: 'white' }}
                     fontSize="sm"
+                    css={{
+                      "&::-webkit-calendar-picker-indicator": {
+                        filter: { base: "none", _dark: "invert(1)" }
+                      }
+                    }}
                   />
                 )}
               </HStack>
@@ -135,20 +150,20 @@ export const SchedulingSection: React.FC<SchedulingSectionProps> = ({
 
           {/* Ovládací tlačítka */}
           {getLinkedNetworks().length > 0 && (
-            <HStack spacing={4}>
+            <HStack gap={4}>
               <Button
-                colorScheme="blue"
+                colorPalette="blue"
                 onClick={onUseForAll}
-                isDisabled={!getLinkedNetworks().some(network => canScheduleOnNetwork(network.id))}
+                disabled={!getLinkedNetworks().some(network => canScheduleOnNetwork(network.id))}
                 size={{ base: 'sm', md: 'md' }}
               >
                 Použít pro všechny
               </Button>
               <Button
-                colorScheme="green"
+                colorPalette="green"
                 onClick={onSaveScheduling}
-                isDisabled={isSaving}
-                isLoading={isSaving}
+                disabled={isSaving}
+                loading={isSaving}
                 size={{ base: 'sm', md: 'md' }}
               >
                 Uložit plánování
@@ -164,19 +179,19 @@ export const SchedulingSection: React.FC<SchedulingSectionProps> = ({
           p={4}
           borderWidth="1px"
           borderRadius="md"
-          borderColor={useColorModeValue('blue.200', 'blue.600')}
-          bg={useColorModeValue('blue.50', 'blue.900')}
+          borderColor={{ base: 'blue.200', _dark: 'blue.600' }}
+          bg={{ base: 'blue.50', _dark: 'blue.900' }}
         >
-          <Text fontSize="sm" color={useColorModeValue('blue.800', 'blue.200')}>
+          <Text fontSize="sm" color={{ base: 'blue.800', _dark: 'blue.200' }}>
             Příspěvek byl již odeslán na následující sítě (nelze již plánovat):
           </Text>
-          <VStack spacing={2} align="stretch" mt={2}>
+          <VStack gap={2} align="stretch" mt={2}>
             {Array.from(sentNetworks).map((networkId) => (
               <HStack key={networkId} justify="space-between">
-                <Text fontSize="sm" color={textColor}>
+                <Text fontSize="sm" color={{ base: 'gray.800', _dark: 'white' }}>
                   {availableNetworks.find(network => network.id === networkId)?.networkName || 'Neznámá síť'}
                 </Text>
-                <Text fontSize="xs" color={useColorModeValue('blue.600', 'blue.300')}>
+                <Text fontSize="xs" color={{ base: 'blue.600', _dark: 'blue.300' }}>
                   Odesláno ✓
                 </Text>
               </HStack>
@@ -187,3 +202,5 @@ export const SchedulingSection: React.FC<SchedulingSectionProps> = ({
     </VStack>
   );
 };
+
+export default SchedulingSection;
